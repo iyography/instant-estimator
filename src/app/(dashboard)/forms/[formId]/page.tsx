@@ -13,6 +13,7 @@ import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { QuestionEditor } from '@/components/dashboard/question-editor';
 import { formatCurrency, generateSlug } from '@/lib/utils';
 import { previewEstimate } from '@/lib/pricing-engine';
+import { DEMO_MODE, DEMO_JOB_TYPES, DEMO_QUESTIONS, DEMO_ANSWERS } from '@/lib/demo/data';
 import { ArrowLeft, Plus, Sparkles, Save, Eye } from 'lucide-react';
 import type { JobType, QuestionWithOptions, AISuggestedQuestion } from '@/types/database';
 import { v4 as uuidv4 } from 'uuid';
@@ -43,7 +44,33 @@ export default function FormBuilderPage() {
 
   useEffect(() => {
     async function fetchJobType() {
-      if (isNew || !company) return;
+      if (isNew || !company) {
+        setLoading(false);
+        return;
+      }
+
+      // Demo mode - use demo data
+      if (DEMO_MODE) {
+        const demoJobType = DEMO_JOB_TYPES.find(jt => jt.id === formId);
+        if (demoJobType) {
+          setJobType(demoJobType as unknown as Partial<JobType>);
+
+          // Build questions with nested answers
+          const demoQuestions = DEMO_QUESTIONS
+            .filter(q => q.job_type_id === formId)
+            .sort((a, b) => a.display_order - b.display_order)
+            .map(q => ({
+              ...q,
+              answer_options: DEMO_ANSWERS
+                .filter(a => a.question_id === q.id)
+                .sort((a, b) => a.display_order - b.display_order),
+            }));
+
+          setQuestions(demoQuestions as unknown as QuestionWithOptions[]);
+        }
+        setLoading(false);
+        return;
+      }
 
       try {
         // Fetch job type with questions and answers
@@ -83,6 +110,14 @@ export default function FormBuilderPage() {
   const handleSave = async () => {
     if (!company) return;
     setSaving(true);
+
+    // Demo mode - just simulate save and redirect
+    if (DEMO_MODE) {
+      await new Promise(resolve => setTimeout(resolve, 500));
+      setSaving(false);
+      router.push('/forms');
+      return;
+    }
 
     try {
       let jobTypeId = formId;
