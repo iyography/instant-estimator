@@ -77,44 +77,88 @@ function MeshGradientBackground() {
 
   return (
     <div className="absolute inset-0 overflow-hidden">
-      {/* Base gradient */}
-      <div className="absolute inset-0 bg-gradient-to-br from-slate-50 via-white to-blue-50" />
+      {/* Deep base gradient - much more colorful */}
+      <div className="absolute inset-0 bg-gradient-to-br from-indigo-100 via-purple-50 via-40% to-pink-100" />
 
-      {/* Animated mesh gradient orbs */}
+      {/* Secondary color layer */}
+      <div className="absolute inset-0 bg-gradient-to-tl from-blue-100/80 via-transparent to-cyan-100/60" />
+
+      {/* Large animated mesh gradient orbs - MUCH more vibrant */}
       <div
-        className="absolute -top-40 -right-40 h-[600px] w-[600px] rounded-full opacity-60 blur-3xl animate-blob"
+        className="absolute -top-20 -right-20 h-[800px] w-[800px] rounded-full opacity-80 blur-3xl animate-blob"
         style={{
-          background: 'radial-gradient(circle, rgba(59, 130, 246, 0.4) 0%, rgba(147, 51, 234, 0.2) 50%, transparent 70%)',
+          background: 'radial-gradient(circle, rgba(99, 102, 241, 0.7) 0%, rgba(168, 85, 247, 0.5) 40%, rgba(236, 72, 153, 0.3) 70%, transparent 100%)',
           transform: `translate(${scrollY * 0.05}px, ${scrollY * 0.02}px)`,
         }}
       />
       <div
-        className="absolute -top-20 -left-40 h-[500px] w-[500px] rounded-full opacity-50 blur-3xl animate-blob animation-delay-2000"
+        className="absolute -top-40 -left-20 h-[700px] w-[700px] rounded-full opacity-70 blur-3xl animate-blob animation-delay-2000"
         style={{
-          background: 'radial-gradient(circle, rgba(34, 197, 94, 0.3) 0%, rgba(59, 130, 246, 0.2) 50%, transparent 70%)',
+          background: 'radial-gradient(circle, rgba(6, 182, 212, 0.6) 0%, rgba(59, 130, 246, 0.5) 40%, rgba(139, 92, 246, 0.3) 70%, transparent 100%)',
           transform: `translate(${-scrollY * 0.03}px, ${scrollY * 0.04}px)`,
         }}
       />
       <div
-        className="absolute top-1/2 left-1/2 h-[700px] w-[700px] -translate-x-1/2 -translate-y-1/2 rounded-full opacity-40 blur-3xl animate-blob animation-delay-4000"
+        className="absolute top-1/3 left-1/2 h-[900px] w-[900px] -translate-x-1/2 rounded-full opacity-60 blur-3xl animate-blob animation-delay-4000"
         style={{
-          background: 'radial-gradient(circle, rgba(249, 115, 22, 0.25) 0%, rgba(236, 72, 153, 0.15) 50%, transparent 70%)',
-          transform: `translate(calc(-50% + ${scrollY * 0.02}px), calc(-50% + ${-scrollY * 0.03}px))`,
+          background: 'radial-gradient(circle, rgba(249, 115, 22, 0.5) 0%, rgba(236, 72, 153, 0.4) 30%, rgba(168, 85, 247, 0.3) 60%, transparent 100%)',
+          transform: `translate(calc(-50% + ${scrollY * 0.02}px), ${-scrollY * 0.03}px)`,
+        }}
+      />
+      <div
+        className="absolute bottom-0 right-1/4 h-[600px] w-[600px] rounded-full opacity-70 blur-3xl animate-blob animation-delay-3000"
+        style={{
+          background: 'radial-gradient(circle, rgba(34, 197, 94, 0.5) 0%, rgba(6, 182, 212, 0.4) 40%, rgba(59, 130, 246, 0.2) 70%, transparent 100%)',
+          transform: `translate(${scrollY * 0.04}px, ${-scrollY * 0.02}px)`,
+        }}
+      />
+      <div
+        className="absolute top-20 left-1/3 h-[500px] w-[500px] rounded-full opacity-50 blur-3xl animate-blob animation-delay-1000"
+        style={{
+          background: 'radial-gradient(circle, rgba(244, 63, 94, 0.4) 0%, rgba(249, 115, 22, 0.3) 50%, transparent 80%)',
+          transform: `translate(${-scrollY * 0.02}px, ${scrollY * 0.03}px)`,
         }}
       />
 
-      {/* Floating particles */}
-      <div className="absolute top-20 left-[20%] h-2 w-2 rounded-full bg-blue-400/40 animate-float" />
-      <div className="absolute top-40 right-[30%] h-3 w-3 rounded-full bg-purple-400/30 animate-float animation-delay-1000" />
-      <div className="absolute top-60 left-[40%] h-2 w-2 rounded-full bg-green-400/40 animate-float animation-delay-2000" />
-      <div className="absolute top-32 right-[15%] h-2 w-2 rounded-full bg-orange-400/30 animate-float animation-delay-3000" />
-
-      {/* Subtle grid overlay */}
+      {/* Extra color accent orbs */}
       <div
-        className="absolute inset-0 opacity-[0.015]"
+        className="absolute top-1/2 right-10 h-[400px] w-[400px] rounded-full opacity-60 blur-2xl animate-blob animation-delay-2000"
         style={{
-          backgroundImage: `linear-gradient(rgba(0,0,0,0.1) 1px, transparent 1px), linear-gradient(90deg, rgba(0,0,0,0.1) 1px, transparent 1px)`,
-          backgroundSize: '60px 60px',
+          background: 'radial-gradient(circle, rgba(192, 132, 252, 0.6) 0%, rgba(139, 92, 246, 0.3) 60%, transparent 100%)',
+        }}
+      />
+      <div
+        className="absolute bottom-1/4 left-10 h-[350px] w-[350px] rounded-full opacity-50 blur-2xl animate-blob animation-delay-4000"
+        style={{
+          background: 'radial-gradient(circle, rgba(34, 211, 238, 0.5) 0%, rgba(6, 182, 212, 0.3) 60%, transparent 100%)',
+        }}
+      />
+
+      {/* Many floating particles - spread across the hero */}
+      <div className="absolute top-16 left-[15%] h-2 w-2 rounded-full bg-indigo-500/60 animate-float" />
+      <div className="absolute top-24 left-[25%] h-1.5 w-1.5 rounded-full bg-purple-400/50 animate-float animation-delay-500" />
+      <div className="absolute top-32 right-[35%] h-3 w-3 rounded-full bg-pink-400/50 animate-float animation-delay-1000" />
+      <div className="absolute top-20 right-[20%] h-2 w-2 rounded-full bg-cyan-400/60 animate-float animation-delay-1500" />
+      <div className="absolute top-48 left-[35%] h-2 w-2 rounded-full bg-blue-500/50 animate-float animation-delay-2000" />
+      <div className="absolute top-36 right-[45%] h-1.5 w-1.5 rounded-full bg-violet-400/60 animate-float animation-delay-2500" />
+      <div className="absolute top-56 left-[55%] h-2.5 w-2.5 rounded-full bg-rose-400/50 animate-float animation-delay-3000" />
+      <div className="absolute top-28 left-[70%] h-2 w-2 rounded-full bg-emerald-400/50 animate-float animation-delay-3500" />
+      <div className="absolute top-64 right-[25%] h-1.5 w-1.5 rounded-full bg-amber-400/60 animate-float animation-delay-4000" />
+      <div className="absolute top-44 left-[10%] h-2 w-2 rounded-full bg-fuchsia-400/50 animate-float animation-delay-500" />
+      <div className="absolute top-72 right-[15%] h-2.5 w-2.5 rounded-full bg-sky-400/60 animate-float animation-delay-1000" />
+      <div className="absolute top-80 left-[45%] h-1.5 w-1.5 rounded-full bg-indigo-400/50 animate-float animation-delay-1500" />
+      <div className="absolute top-[85%] left-[20%] h-2 w-2 rounded-full bg-purple-500/50 animate-float animation-delay-2000" />
+      <div className="absolute top-[90%] right-[30%] h-2 w-2 rounded-full bg-pink-500/60 animate-float animation-delay-2500" />
+      <div className="absolute top-[75%] left-[60%] h-1.5 w-1.5 rounded-full bg-cyan-500/50 animate-float animation-delay-3000" />
+
+      {/* Glowing accent lines */}
+      <div className="absolute top-1/4 left-0 right-0 h-px bg-gradient-to-r from-transparent via-purple-400/30 to-transparent" />
+      <div className="absolute top-2/3 left-0 right-0 h-px bg-gradient-to-r from-transparent via-cyan-400/20 to-transparent" />
+
+      {/* Subtle noise texture overlay for depth */}
+      <div className="absolute inset-0 opacity-[0.02] mix-blend-overlay"
+        style={{
+          backgroundImage: `url("data:image/svg+xml,%3Csvg viewBox='0 0 256 256' xmlns='http://www.w3.org/2000/svg'%3E%3Cfilter id='noise'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='0.9' numOctaves='4' stitchTiles='stitch'/%3E%3C/filter%3E%3Crect width='100%25' height='100%25' filter='url(%23noise)'/%3E%3C/svg%3E")`,
         }}
       />
     </div>
@@ -191,13 +235,17 @@ export default function HomePage() {
       <style jsx global>{`
         @keyframes blob {
           0%, 100% { transform: translate(0, 0) scale(1); }
-          25% { transform: translate(20px, -30px) scale(1.05); }
-          50% { transform: translate(-20px, 20px) scale(0.95); }
-          75% { transform: translate(30px, 10px) scale(1.02); }
+          25% { transform: translate(30px, -40px) scale(1.08); }
+          50% { transform: translate(-30px, 30px) scale(0.92); }
+          75% { transform: translate(40px, 15px) scale(1.04); }
         }
         @keyframes float {
-          0%, 100% { transform: translateY(0px) rotate(0deg); opacity: 0.4; }
-          50% { transform: translateY(-20px) rotate(180deg); opacity: 0.8; }
+          0%, 100% { transform: translateY(0px); opacity: 0.5; }
+          50% { transform: translateY(-25px); opacity: 0.9; }
+        }
+        @keyframes pulse-glow {
+          0%, 100% { opacity: 0.4; transform: scale(1); }
+          50% { opacity: 0.8; transform: scale(1.1); }
         }
         @keyframes shimmer {
           0% { background-position: -200% 0; }
