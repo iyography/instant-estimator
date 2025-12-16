@@ -1,82 +1,30 @@
 'use client';
 
-import { useState, Suspense } from 'react';
-import { useRouter, useSearchParams } from 'next/navigation';
+import { useState } from 'react';
+import { useRouter } from 'next/navigation';
 import Link from 'next/link';
-import { createClient } from '@/lib/supabase/client';
-import { DEMO_MODE } from '@/lib/demo/data';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
 import { Card, CardContent, CardDescription, CardFooter, CardHeader, CardTitle } from '@/components/ui/card';
 
-function LoginForm() {
+export default function LoginPage() {
   const [email, setEmail] = useState('');
   const [password, setPassword] = useState('');
-  const [error, setError] = useState<string | null>(null);
   const [isLoading, setIsLoading] = useState(false);
   const router = useRouter();
-  const searchParams = useSearchParams();
-  const redirect = searchParams.get('redirect') || '/overview';
-
-  const supabase = createClient();
 
   const handleLogin = async (e: React.FormEvent) => {
     e.preventDefault();
     setIsLoading(true);
-    setError(null);
-
-    // Demo mode - just redirect to dashboard
-    if (DEMO_MODE) {
-      await new Promise(resolve => setTimeout(resolve, 500));
-      router.push(redirect);
-      return;
-    }
-
-    const { error } = await supabase.auth.signInWithPassword({
-      email,
-      password,
-    });
-
-    if (error) {
-      setError(error.message);
-      setIsLoading(false);
-      return;
-    }
-
-    router.push(redirect);
-    router.refresh();
+    await new Promise(resolve => setTimeout(resolve, 500));
+    router.push('/overview');
   };
 
   const handleGoogleLogin = async () => {
-    // Demo mode - just redirect to dashboard
-    if (DEMO_MODE) {
-      setIsLoading(true);
-      await new Promise(resolve => setTimeout(resolve, 500));
-      router.push(redirect);
-      return;
-    }
-
-    setIsLoading(true);
-    setError(null);
-
-    const { error } = await supabase.auth.signInWithOAuth({
-      provider: 'google',
-      options: {
-        redirectTo: `${window.location.origin}/auth/callback?redirect=${redirect}`,
-      },
-    });
-
-    if (error) {
-      setError(error.message);
-      setIsLoading(false);
-    }
-  };
-
-  const handleDemoLogin = async () => {
     setIsLoading(true);
     await new Promise(resolve => setTimeout(resolve, 500));
-    router.push(redirect);
+    router.push('/overview');
   };
 
   return (
@@ -89,21 +37,6 @@ function LoginForm() {
       </CardHeader>
       <form onSubmit={handleLogin}>
         <CardContent className="space-y-4">
-          {error && (
-            <div className="rounded-md bg-red-50 p-3 text-sm text-red-600">
-              {error}
-            </div>
-          )}
-          {DEMO_MODE && (
-            <Button
-              type="button"
-              className="w-full bg-gradient-to-r from-green-600 to-emerald-600 hover:from-green-700 hover:to-emerald-700"
-              onClick={handleDemoLogin}
-              isLoading={isLoading}
-            >
-              Try Demo (Skip Login)
-            </Button>
-          )}
           <div className="space-y-2">
             <Label htmlFor="email">Email</Label>
             <Input
@@ -112,7 +45,6 @@ function LoginForm() {
               placeholder="name@company.com"
               value={email}
               onChange={(e) => setEmail(e.target.value)}
-              required={!DEMO_MODE}
             />
           </div>
           <div className="space-y-2">
@@ -122,7 +54,6 @@ function LoginForm() {
               type="password"
               value={password}
               onChange={(e) => setPassword(e.target.value)}
-              required={!DEMO_MODE}
             />
           </div>
         </CardContent>
@@ -176,19 +107,5 @@ function LoginForm() {
         </CardFooter>
       </form>
     </Card>
-  );
-}
-
-export default function LoginPage() {
-  return (
-    <Suspense fallback={
-      <Card className="w-full max-w-md">
-        <CardContent className="py-8 text-center">
-          <div className="h-8 w-8 mx-auto animate-spin rounded-full border-4 border-slate-200 border-t-slate-900" />
-        </CardContent>
-      </Card>
-    }>
-      <LoginForm />
-    </Suspense>
   );
 }

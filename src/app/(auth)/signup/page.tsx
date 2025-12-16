@@ -3,8 +3,6 @@
 import { useState } from 'react';
 import { useRouter } from 'next/navigation';
 import Link from 'next/link';
-import { createClient } from '@/lib/supabase/client';
-import { DEMO_MODE } from '@/lib/demo/data';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
@@ -14,108 +12,17 @@ export default function SignupPage() {
   const [email, setEmail] = useState('');
   const [password, setPassword] = useState('');
   const [confirmPassword, setConfirmPassword] = useState('');
-  const [error, setError] = useState<string | null>(null);
   const [isLoading, setIsLoading] = useState(false);
-  const [success, setSuccess] = useState(false);
   const router = useRouter();
-
-  const supabase = createClient();
 
   const handleSignup = async (e: React.FormEvent) => {
     e.preventDefault();
     setIsLoading(true);
-    setError(null);
-
-    // Demo mode - redirect directly to onboarding
-    if (DEMO_MODE) {
-      await new Promise(resolve => setTimeout(resolve, 500));
-      router.push('/onboarding');
-      return;
-    }
-
-    if (password !== confirmPassword) {
-      setError('Passwords do not match');
-      setIsLoading(false);
-      return;
-    }
-
-    if (password.length < 8) {
-      setError('Password must be at least 8 characters');
-      setIsLoading(false);
-      return;
-    }
-
-    const { error } = await supabase.auth.signUp({
-      email,
-      password,
-      options: {
-        emailRedirectTo: `${window.location.origin}/auth/callback?redirect=/onboarding`,
-      },
-    });
-
-    if (error) {
-      setError(error.message);
-      setIsLoading(false);
-      return;
-    }
-
-    setSuccess(true);
-    setIsLoading(false);
+    await new Promise(resolve => setTimeout(resolve, 500));
+    router.push('/onboarding');
   };
 
   const handleGoogleSignup = async () => {
-    // Demo mode - redirect directly to onboarding
-    if (DEMO_MODE) {
-      setIsLoading(true);
-      await new Promise(resolve => setTimeout(resolve, 500));
-      router.push('/onboarding');
-      return;
-    }
-
-    setIsLoading(true);
-    setError(null);
-
-    const { error } = await supabase.auth.signInWithOAuth({
-      provider: 'google',
-      options: {
-        redirectTo: `${window.location.origin}/auth/callback?redirect=/onboarding`,
-      },
-    });
-
-    if (error) {
-      setError(error.message);
-      setIsLoading(false);
-    }
-  };
-
-  if (success) {
-    return (
-      <Card className="w-full max-w-md">
-        <CardHeader>
-          <CardTitle>Check your email</CardTitle>
-          <CardDescription>
-            We have sent a confirmation link to {email}
-          </CardDescription>
-        </CardHeader>
-        <CardContent>
-          <p className="text-sm text-slate-600">
-            Click the link in the email to confirm your account and complete registration.
-          </p>
-        </CardContent>
-        <CardFooter>
-          <Button
-            variant="outline"
-            className="w-full"
-            onClick={() => router.push('/login')}
-          >
-            Back to sign in
-          </Button>
-        </CardFooter>
-      </Card>
-    );
-  }
-
-  const handleDemoSignup = async () => {
     setIsLoading(true);
     await new Promise(resolve => setTimeout(resolve, 500));
     router.push('/onboarding');
@@ -131,21 +38,6 @@ export default function SignupPage() {
       </CardHeader>
       <form onSubmit={handleSignup}>
         <CardContent className="space-y-4">
-          {error && (
-            <div className="rounded-md bg-red-50 p-3 text-sm text-red-600">
-              {error}
-            </div>
-          )}
-          {DEMO_MODE && (
-            <Button
-              type="button"
-              className="w-full bg-gradient-to-r from-green-600 to-emerald-600 hover:from-green-700 hover:to-emerald-700"
-              onClick={handleDemoSignup}
-              isLoading={isLoading}
-            >
-              Try Demo (Skip Signup)
-            </Button>
-          )}
           <div className="space-y-2">
             <Label htmlFor="email">Email</Label>
             <Input
@@ -154,7 +46,6 @@ export default function SignupPage() {
               placeholder="name@company.com"
               value={email}
               onChange={(e) => setEmail(e.target.value)}
-              required={!DEMO_MODE}
             />
           </div>
           <div className="space-y-2">
@@ -164,8 +55,6 @@ export default function SignupPage() {
               type="password"
               value={password}
               onChange={(e) => setPassword(e.target.value)}
-              required={!DEMO_MODE}
-              minLength={DEMO_MODE ? undefined : 8}
             />
             <p className="text-xs text-slate-500">At least 8 characters</p>
           </div>
@@ -176,7 +65,6 @@ export default function SignupPage() {
               type="password"
               value={confirmPassword}
               onChange={(e) => setConfirmPassword(e.target.value)}
-              required={!DEMO_MODE}
             />
           </div>
         </CardContent>

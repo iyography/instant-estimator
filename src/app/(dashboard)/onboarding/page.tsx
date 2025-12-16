@@ -1,10 +1,9 @@
 'use client';
 
-import { useState, useEffect } from 'react';
+import { useState } from 'react';
 import { useRouter } from 'next/navigation';
-import { createClient } from '@/lib/supabase/client';
 import { useDashboardLanguage } from '@/hooks/use-dashboard-language';
-import { DEMO_MODE, DEMO_COMPANY } from '@/lib/demo/data';
+import { DEMO_COMPANY } from '@/lib/demo/data';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
@@ -31,7 +30,6 @@ interface OnboardingState {
 
 export default function OnboardingPage() {
   const router = useRouter();
-  const supabase = createClient();
   const { t, language: dashboardLanguage } = useDashboardLanguage();
 
   const industryOptions = [
@@ -73,37 +71,6 @@ export default function OnboardingPage() {
   const [loading, setLoading] = useState(false);
   const [aiLoading, setAiLoading] = useState(false);
   const [company, setCompany] = useState<Company | null>(null);
-  const [existingCompany, setExistingCompany] = useState(false);
-
-  // Check if user already has a company
-  useEffect(() => {
-    async function checkCompany() {
-      // Demo mode - skip auth check, don't auto-redirect to final step
-      if (DEMO_MODE) {
-        return;
-      }
-
-      const { data: { user } } = await supabase.auth.getUser();
-      if (!user) {
-        router.push('/login');
-        return;
-      }
-
-      const { data } = await supabase
-        .from('companies')
-        .select('*')
-        .eq('user_id', user.id)
-        .single();
-
-      if (data) {
-        setExistingCompany(true);
-        setCompany(data);
-        setState((prev) => ({ ...prev, step: 4 })); // Skip to final step
-      }
-    }
-
-    checkCompany();
-  }, [supabase, router]);
 
   const suggestedJobTypes = SUGGESTED_JOB_TYPES[state.industry]?.[state.language] || [];
 
@@ -117,138 +84,24 @@ export default function OnboardingPage() {
 
   const handleCreateCompany = async () => {
     setLoading(true);
+    setAiLoading(true);
 
-    // Demo mode - simulate company creation
-    if (DEMO_MODE) {
-      await new Promise(resolve => setTimeout(resolve, 1500));
-      const demoCompany = {
-        ...DEMO_COMPANY,
-        name: state.companyName || DEMO_COMPANY.name,
-        slug: generateSlug(state.companyName || DEMO_COMPANY.name),
-        industry: state.industry,
-        default_currency: state.currency,
-        default_language: state.language,
-      } as unknown as Company;
-      setCompany(demoCompany);
-      setLoading(false);
-      handleNext();
-      return;
-    }
+    // Simulate company creation
+    await new Promise(resolve => setTimeout(resolve, 1500));
 
-    try {
-      const { data: { user } } = await supabase.auth.getUser();
-      if (!user) throw new Error('Not authenticated');
+    const demoCompany = {
+      ...DEMO_COMPANY,
+      name: state.companyName || DEMO_COMPANY.name,
+      slug: generateSlug(state.companyName || DEMO_COMPANY.name),
+      industry: state.industry,
+      default_currency: state.currency,
+      default_language: state.language,
+    } as unknown as Company;
 
-      // Create company
-      const slug = generateSlug(state.companyName);
-      const { data: newCompany, error: companyError } = await supabase
-        .from('companies')
-        .insert({
-          user_id: user.id,
-          name: state.companyName,
-          email: state.email || user.email,
-          phone: state.phone || null,
-          website_url: state.website || null,
-          industry: state.industry,
-          default_currency: state.currency,
-          default_language: state.language,
-          subscription_status: 'trial',
-          slug,
-          settings: {
-            estimate_range_low_percentage: 10,
-            estimate_range_high_percentage: 15,
-          },
-        })
-        .select()
-        .single();
-
-      if (companyError) throw companyError;
-
-      setCompany(newCompany);
-
-      // Create the first job type
-      const jobTypeName = state.selectedJobType || state.customJobType;
-      if (jobTypeName) {
-        const { data: jobType, error: jobTypeError } = await supabase
-          .from('job_types')
-          .insert({
-            company_id: newCompany.id,
-            name: jobTypeName,
-            name_sv: jobTypeName,
-            base_price: state.basePrice * 100, // Convert to smallest unit
-            is_active: true,
-            display_order: 0,
-          })
-          .select()
-          .single();
-
-        if (jobTypeError) throw jobTypeError;
-
-        // If AI suggestions were used, create the questions
-        if (jobType && state.selectedJobType) {
-          // Fetch AI suggestions for this job type
-          setAiLoading(true);
-          try {
-            const response = await fetch('/api/ai/suggestions', {
-              method: 'POST',
-              headers: { 'Content-Type': 'application/json' },
-              body: JSON.stringify({
-                industry: state.industry,
-                job_type_name: jobTypeName,
-                language: state.language,
-              }),
-            });
-
-            if (response.ok) {
-              const { questions } = await response.json();
-
-              // Create questions and answers
-              for (let i = 0; i < questions.length; i++) {
-                const q = questions[i];
-                const { data: question } = await supabase
-                  .from('questions')
-                  .insert({
-                    job_type_id: jobType.id,
-                    question_text: q.question_text,
-                    question_text_sv: q.question_text,
-                    question_type: q.question_type,
-                    is_required: true,
-                    display_order: i,
-                    ai_generated: true,
-                  })
-                  .select()
-                  .single();
-
-                if (question) {
-                  for (let j = 0; j < q.answer_options.length; j++) {
-                    const a = q.answer_options[j];
-                    await supabase.from('answer_options').insert({
-                      question_id: question.id,
-                      answer_text: a.answer_text,
-                      answer_text_sv: a.answer_text,
-                      price_modifier_type: a.price_modifier_type,
-                      price_modifier_value: a.price_modifier_value,
-                      display_order: j,
-                    });
-                  }
-                }
-              }
-            }
-          } catch (error) {
-            console.error('Failed to create AI questions:', error);
-          } finally {
-            setAiLoading(false);
-          }
-        }
-      }
-
-      handleNext();
-    } catch (error) {
-      console.error('Failed to create company:', error);
-      alert(t.onboarding.errors.createFailed);
-    } finally {
-      setLoading(false);
-    }
+    setCompany(demoCompany);
+    setLoading(false);
+    setAiLoading(false);
+    handleNext();
   };
 
   const handleFinish = () => {
@@ -287,8 +140,7 @@ export default function OnboardingPage() {
         </div>
 
         {/* Progress */}
-        {!existingCompany && (
-          <div className="mb-8">
+        <div className="mb-8">
             <div className="flex justify-between text-sm">
               {progressSteps.map((label, i) => (
                 <div
@@ -321,7 +173,6 @@ export default function OnboardingPage() {
               ))}
             </div>
           </div>
-        )}
 
         {/* Step 1: Company Info */}
         {state.step === 1 && (
