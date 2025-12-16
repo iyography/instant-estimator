@@ -328,21 +328,21 @@ export default function HomePage() {
           animation: shimmer 3s ease-in-out infinite;
           background-size: 200% 100%;
         }
-        .animation-delay-500 { animation-delay: 0.5s; }
-        .animation-delay-1000 { animation-delay: 1s; }
-        .animation-delay-1500 { animation-delay: 1.5s; }
-        .animation-delay-2000 { animation-delay: 2s; }
-        .animation-delay-2500 { animation-delay: 2.5s; }
-        .animation-delay-3000 { animation-delay: 3s; }
-        .animation-delay-3500 { animation-delay: 3.5s; }
-        .animation-delay-4000 { animation-delay: 4s; }
-        .animation-delay-4500 { animation-delay: 4.5s; }
-        .animation-delay-5000 { animation-delay: 5s; }
-        .animation-delay-5500 { animation-delay: 5.5s; }
-        .animation-delay-6000 { animation-delay: 6s; }
-        .animation-delay-6500 { animation-delay: 6.5s; }
-        .animation-delay-7000 { animation-delay: 7s; }
-        .animation-delay-7500 { animation-delay: 7.5s; }
+        .animation-delay-500 { animation-delay: -0.5s; }
+        .animation-delay-1000 { animation-delay: -1s; }
+        .animation-delay-1500 { animation-delay: -1.5s; }
+        .animation-delay-2000 { animation-delay: -2s; }
+        .animation-delay-2500 { animation-delay: -2.5s; }
+        .animation-delay-3000 { animation-delay: -3s; }
+        .animation-delay-3500 { animation-delay: -3.5s; }
+        .animation-delay-4000 { animation-delay: -4s; }
+        .animation-delay-4500 { animation-delay: -4.5s; }
+        .animation-delay-5000 { animation-delay: -5s; }
+        .animation-delay-5500 { animation-delay: -5.5s; }
+        .animation-delay-6000 { animation-delay: -6s; }
+        .animation-delay-6500 { animation-delay: -6.5s; }
+        .animation-delay-7000 { animation-delay: -7s; }
+        .animation-delay-7500 { animation-delay: -7.5s; }
         .animate-fade-in-up {
           animation: fadeInUp 0.8s ease-out forwards;
         }
