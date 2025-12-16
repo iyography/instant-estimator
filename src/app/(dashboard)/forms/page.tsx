@@ -2,14 +2,13 @@
 
 import { useEffect, useState } from 'react';
 import Link from 'next/link';
-import { createClient } from '@/lib/supabase/client';
 import { useCompany } from '@/hooks/use-company';
 import { useDashboardLanguage } from '@/hooks/use-dashboard-language';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { Badge } from '@/components/ui/badge';
 import { formatCurrency } from '@/lib/utils';
-import { DEMO_MODE, DEMO_JOB_TYPES, DEMO_FORMS } from '@/lib/demo/data';
+import { DEMO_JOB_TYPES, DEMO_FORMS } from '@/lib/demo/data';
 import { Plus, FileText, MoreVertical, Copy, ExternalLink, Pencil, Trash2 } from 'lucide-react';
 import type { JobType, EstimatorForm } from '@/types/database';
 
@@ -21,61 +20,18 @@ export default function FormsPage() {
   const [loading, setLoading] = useState(true);
   const [activeMenu, setActiveMenu] = useState<string | null>(null);
 
-  const supabase = createClient();
-
   useEffect(() => {
-    async function fetchData() {
-      if (!company) return;
+    if (!company) return;
 
-      // Demo mode - use demo data
-      if (DEMO_MODE) {
-        setJobTypes(DEMO_JOB_TYPES as unknown as JobType[]);
-        setForms(DEMO_FORMS as unknown as EstimatorForm[]);
-        setLoading(false);
-        return;
-      }
-
-      try {
-        const [jobTypesRes, formsRes] = await Promise.all([
-          supabase
-            .from('job_types')
-            .select('*')
-            .eq('company_id', company.id)
-            .order('display_order', { ascending: true }),
-          supabase
-            .from('estimator_forms')
-            .select('*')
-            .eq('company_id', company.id)
-            .order('created_at', { ascending: false }),
-        ]);
-
-        if (jobTypesRes.data) setJobTypes(jobTypesRes.data);
-        if (formsRes.data) setForms(formsRes.data);
-      } catch (error) {
-        console.error('Failed to fetch data:', error);
-      } finally {
-        setLoading(false);
-      }
-    }
-
-    fetchData();
-  }, [company, supabase]);
+    // Always use demo data
+    setJobTypes(DEMO_JOB_TYPES as unknown as JobType[]);
+    setForms(DEMO_FORMS as unknown as EstimatorForm[]);
+    setLoading(false);
+  }, [company]);
 
   const handleDeleteJobType = async (id: string) => {
     if (!confirm(t.forms.confirmDelete)) return;
-
-    // Demo mode - just update local state
-    if (DEMO_MODE) {
-      setJobTypes(jobTypes.filter((jt) => jt.id !== id));
-      setActiveMenu(null);
-      return;
-    }
-
-    const { error } = await supabase.from('job_types').delete().eq('id', id);
-
-    if (!error) {
-      setJobTypes(jobTypes.filter((jt) => jt.id !== id));
-    }
+    setJobTypes(jobTypes.filter((jt) => jt.id !== id));
     setActiveMenu(null);
   };
 

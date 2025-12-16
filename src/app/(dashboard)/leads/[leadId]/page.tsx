@@ -3,22 +3,19 @@
 import { useEffect, useState } from 'react';
 import { useParams, useRouter } from 'next/navigation';
 import Link from 'next/link';
-import { createClient } from '@/lib/supabase/client';
 import { useCompany } from '@/hooks/use-company';
 import { useDashboardLanguage } from '@/hooks/use-dashboard-language';
 import { Button } from '@/components/ui/button';
 import { Select } from '@/components/ui/select';
 import { Textarea } from '@/components/ui/textarea';
-import { Badge } from '@/components/ui/badge';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
-import { formatCurrency, formatDate, getStatusColor } from '@/lib/utils';
-import { DEMO_MODE, DEMO_LEADS, DEMO_JOB_TYPES, DEMO_QUESTIONS, DEMO_ANSWERS } from '@/lib/demo/data';
+import { formatCurrency, formatDate } from '@/lib/utils';
+import { DEMO_LEADS, DEMO_JOB_TYPES, DEMO_QUESTIONS, DEMO_ANSWERS } from '@/lib/demo/data';
 import { ArrowLeft, Mail, Phone, MapPin, Copy, ExternalLink, Save } from 'lucide-react';
 import type { LeadWithResponses, LeadStatus, JobType, Question, AnswerOption } from '@/types/database';
 
 export default function LeadDetailPage() {
   const params = useParams();
-  const router = useRouter();
   const { company } = useCompany();
   const { t, language } = useDashboardLanguage();
   const leadId = params.leadId as string;
@@ -32,8 +29,6 @@ export default function LeadDetailPage() {
   const [loading, setLoading] = useState(true);
   const [saving, setSaving] = useState(false);
 
-  const supabase = createClient();
-
   const statusOptions = [
     { value: 'new', label: t.status.new },
     { value: 'contacted', label: t.status.contacted },
@@ -43,121 +38,33 @@ export default function LeadDetailPage() {
   ];
 
   useEffect(() => {
-    async function fetchData() {
-      if (!company) return;
+    if (!company) return;
 
-      // Demo mode - use demo data
-      if (DEMO_MODE) {
-        const demoLead = DEMO_LEADS.find(l => l.id === leadId);
-        if (demoLead) {
-          setLead(demoLead as unknown as LeadWithResponses);
-          setNotes(demoLead.notes || '');
-          setStatus(demoLead.status);
+    // Load demo data
+    const demoLead = DEMO_LEADS.find(l => l.id === leadId);
+    if (demoLead) {
+      setLead(demoLead as unknown as LeadWithResponses);
+      setNotes(demoLead.notes || '');
+      setStatus(demoLead.status);
 
-          const demoJobType = DEMO_JOB_TYPES.find(jt => jt.id === demoLead.job_type_id);
-          if (demoJobType) {
-            setJobType(demoJobType as unknown as JobType);
-            const demoQuestions = DEMO_QUESTIONS.filter(q => q.job_type_id === demoJobType.id);
-            setQuestions(demoQuestions as unknown as Question[]);
-            const questionIds = demoQuestions.map(q => q.id);
-            const demoAnswers = DEMO_ANSWERS.filter(a => questionIds.includes(a.question_id));
-            setAnswerOptions(demoAnswers as unknown as AnswerOption[]);
-          }
-        }
-        setLoading(false);
-        return;
-      }
-
-      try {
-        // Fetch lead with responses
-        const { data: leadData, error: leadError } = await supabase
-          .from('leads')
-          .select(`
-            *,
-            lead_responses (*)
-          `)
-          .eq('id', leadId)
-          .single();
-
-        if (leadError) throw leadError;
-
-        setLead(leadData);
-        setNotes(leadData.notes || '');
-        setStatus(leadData.status);
-
-        // Fetch job type
-        if (leadData.job_type_id) {
-          const { data: jobTypeData } = await supabase
-            .from('job_types')
-            .select('*')
-            .eq('id', leadData.job_type_id)
-            .single();
-
-          if (jobTypeData) {
-            setJobType(jobTypeData);
-
-            // Fetch questions for this job type
-            const { data: questionsData } = await supabase
-              .from('questions')
-              .select('*')
-              .eq('job_type_id', jobTypeData.id)
-              .order('display_order', { ascending: true });
-
-            if (questionsData) {
-              setQuestions(questionsData);
-
-              // Fetch answer options
-              const questionIds = questionsData.map((q) => q.id);
-              const { data: answersData } = await supabase
-                .from('answer_options')
-                .select('*')
-                .in('question_id', questionIds);
-
-              if (answersData) setAnswerOptions(answersData);
-            }
-          }
-        }
-      } catch (error) {
-        console.error('Failed to fetch lead:', error);
-      } finally {
-        setLoading(false);
+      const demoJobType = DEMO_JOB_TYPES.find(jt => jt.id === demoLead.job_type_id);
+      if (demoJobType) {
+        setJobType(demoJobType as unknown as JobType);
+        const demoQuestions = DEMO_QUESTIONS.filter(q => q.job_type_id === demoJobType.id);
+        setQuestions(demoQuestions as unknown as Question[]);
+        const questionIds = demoQuestions.map(q => q.id);
+        const demoAnswers = DEMO_ANSWERS.filter(a => questionIds.includes(a.question_id));
+        setAnswerOptions(demoAnswers as unknown as AnswerOption[]);
       }
     }
-
-    fetchData();
-  }, [leadId, company, supabase]);
+    setLoading(false);
+  }, [leadId, company]);
 
   const handleSave = async () => {
     setSaving(true);
-
-    // Demo mode - just update local state
-    if (DEMO_MODE) {
-      await new Promise(resolve => setTimeout(resolve, 500));
-      setLead((prev) => prev ? { ...prev, status, notes } : null);
-      setSaving(false);
-      return;
-    }
-
-    try {
-      const { error } = await supabase
-        .from('leads')
-        .update({
-          status,
-          notes,
-        })
-        .eq('id', leadId);
-
-      if (error) throw error;
-
-      setLead((prev) =>
-        prev ? { ...prev, status, notes } : null
-      );
-    } catch (error) {
-      console.error('Failed to save:', error);
-      alert(t.settings.messages.error);
-    } finally {
-      setSaving(false);
-    }
+    await new Promise(resolve => setTimeout(resolve, 500));
+    setLead((prev) => prev ? { ...prev, status, notes } : null);
+    setSaving(false);
   };
 
   const copyToClipboard = (text: string) => {
@@ -217,7 +124,6 @@ export default function LeadDetailPage() {
       </div>
 
       <div className="grid gap-6 md:grid-cols-2">
-        {/* Contact Info */}
         <Card>
           <CardHeader>
             <CardTitle>{t.leadDetail.contactInfo}</CardTitle>
@@ -228,11 +134,7 @@ export default function LeadDetailPage() {
                 <Mail className="h-5 w-5 text-slate-400" />
                 <span>{lead.customer_email}</span>
               </div>
-              <Button
-                variant="ghost"
-                size="icon"
-                onClick={() => copyToClipboard(lead.customer_email)}
-              >
+              <Button variant="ghost" size="icon" onClick={() => copyToClipboard(lead.customer_email)}>
                 <Copy className="h-4 w-4" />
               </Button>
             </div>
@@ -243,11 +145,7 @@ export default function LeadDetailPage() {
                   <span>{lead.customer_phone}</span>
                 </div>
                 <div className="flex gap-1">
-                  <Button
-                    variant="ghost"
-                    size="icon"
-                    onClick={() => copyToClipboard(lead.customer_phone!)}
-                  >
+                  <Button variant="ghost" size="icon" onClick={() => copyToClipboard(lead.customer_phone!)}>
                     <Copy className="h-4 w-4" />
                   </Button>
                   <a href={`tel:${lead.customer_phone}`}>
@@ -267,12 +165,7 @@ export default function LeadDetailPage() {
                 <Button
                   variant="ghost"
                   size="icon"
-                  onClick={() =>
-                    window.open(
-                      `https://maps.google.com/?q=${encodeURIComponent(lead.customer_address!)}`,
-                      '_blank'
-                    )
-                  }
+                  onClick={() => window.open(`https://maps.google.com/?q=${encodeURIComponent(lead.customer_address!)}`, '_blank')}
                 >
                   <ExternalLink className="h-4 w-4" />
                 </Button>
@@ -281,61 +174,30 @@ export default function LeadDetailPage() {
           </CardContent>
         </Card>
 
-        {/* Status & Estimate */}
         <Card>
           <CardHeader>
             <CardTitle>{t.leadDetail.statusEstimate}</CardTitle>
           </CardHeader>
           <CardContent className="space-y-4">
             <div>
-              <label className="mb-2 block text-sm font-medium text-slate-600">
-                {t.leads.table.status}
-              </label>
-              <Select
-                value={status}
-                onChange={(e) => setStatus(e.target.value as LeadStatus)}
-                options={statusOptions}
-              />
+              <label className="mb-2 block text-sm font-medium text-slate-600">{t.leads.table.status}</label>
+              <Select value={status} onChange={(e) => setStatus(e.target.value as LeadStatus)} options={statusOptions} />
             </div>
             <div>
-              <label className="mb-2 block text-sm font-medium text-slate-600">
-                {t.leadDetail.priceEstimate}
-              </label>
+              <label className="mb-2 block text-sm font-medium text-slate-600">{t.leadDetail.priceEstimate}</label>
               <p className="text-2xl font-bold text-slate-900">
-                {formatCurrency(
-                  lead.estimated_price_low,
-                  company?.default_currency || 'USD',
-                  language
-                )}
+                {formatCurrency(lead.estimated_price_low, company?.default_currency || 'USD', language)}
                 {' - '}
-                {formatCurrency(
-                  lead.estimated_price_high,
-                  company?.default_currency || 'USD',
-                  language
-                )}
+                {formatCurrency(lead.estimated_price_high, company?.default_currency || 'USD', language)}
               </p>
             </div>
             <div className="flex items-center gap-4 text-sm text-slate-500">
-              <span>
-                {t.leadDetail.created}: {formatDate(lead.created_at, language)}
-              </span>
-              {lead.source_url && (
-                <a
-                  href={lead.source_url}
-                  target="_blank"
-                  rel="noopener noreferrer"
-                  className="flex items-center gap-1 text-blue-600 hover:underline"
-                >
-                  {t.leadDetail.source}
-                  <ExternalLink className="h-3 w-3" />
-                </a>
-              )}
+              <span>{t.leadDetail.created}: {formatDate(lead.created_at, language)}</span>
             </div>
           </CardContent>
         </Card>
       </div>
 
-      {/* Responses */}
       {lead.lead_responses && lead.lead_responses.length > 0 && (
         <Card>
           <CardHeader>
@@ -344,23 +206,12 @@ export default function LeadDetailPage() {
           <CardContent>
             <div className="space-y-4">
               {questions.map((question) => {
-                const response = lead.lead_responses?.find(
-                  (r) => r.question_id === question.id
-                );
+                const response = lead.lead_responses?.find((r) => r.question_id === question.id);
                 if (!response) return null;
-
                 return (
                   <div key={question.id} className="border-b border-slate-100 pb-4 last:border-0">
-                    <p className="text-sm font-medium text-slate-600">
-                      {question.question_text}
-                    </p>
-                    <p className="mt-1 text-slate-900">
-                      {getAnswerText(
-                        question.id,
-                        response.answer_option_id,
-                        response.raw_answer
-                      )}
-                    </p>
+                    <p className="text-sm font-medium text-slate-600">{question.question_text}</p>
+                    <p className="mt-1 text-slate-900">{getAnswerText(question.id, response.answer_option_id, response.raw_answer)}</p>
                   </div>
                 );
               })}
@@ -369,18 +220,12 @@ export default function LeadDetailPage() {
         </Card>
       )}
 
-      {/* Notes */}
       <Card>
         <CardHeader>
           <CardTitle>{t.leadDetail.notes}</CardTitle>
         </CardHeader>
         <CardContent>
-          <Textarea
-            value={notes}
-            onChange={(e) => setNotes(e.target.value)}
-            placeholder={t.leadDetail.notesPlaceholder}
-            rows={4}
-          />
+          <Textarea value={notes} onChange={(e) => setNotes(e.target.value)} placeholder={t.leadDetail.notesPlaceholder} rows={4} />
         </CardContent>
       </Card>
     </div>

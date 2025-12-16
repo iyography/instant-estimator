@@ -2,7 +2,6 @@
 
 import { useEffect, useState } from 'react';
 import Link from 'next/link';
-import { createClient } from '@/lib/supabase/client';
 import { useCompany } from '@/hooks/use-company';
 import { useDashboardLanguage } from '@/hooks/use-dashboard-language';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
@@ -11,7 +10,7 @@ import { Badge } from '@/components/ui/badge';
 import { LeadValueBadge } from '@/components/crm/lead-value-badge';
 import { formatCurrency, formatDate, getStatusColor } from '@/lib/utils';
 import { calculateLeadValue } from '@/lib/lead-scoring';
-import { DEMO_MODE, DEMO_LEADS, getDemoStats } from '@/lib/demo/data';
+import { DEMO_LEADS, getDemoStats } from '@/lib/demo/data';
 import { Users, FileText, TrendingUp, DollarSign, Plus, ArrowRight, Copy, Check } from 'lucide-react';
 import type { Lead, LeadStatus, Currency } from '@/types/database';
 
@@ -35,55 +34,15 @@ export default function OverviewPage() {
   const [loading, setLoading] = useState(true);
   const [copied, setCopied] = useState(false);
 
-  const supabase = createClient();
-
   useEffect(() => {
-    async function fetchDashboardData() {
-      if (!company) return;
+    if (!company) return;
 
-      // Demo mode - use demo data
-      if (DEMO_MODE) {
-        const demoStats = getDemoStats();
-        setStats(demoStats);
-        setRecentLeads(DEMO_LEADS.slice(0, 5) as unknown as Lead[]);
-        setLoading(false);
-        return;
-      }
-
-      try {
-        // Fetch all leads for stats
-        const { data: leads } = await supabase
-          .from('leads')
-          .select('*')
-          .eq('company_id', company.id)
-          .order('created_at', { ascending: false });
-
-        if (leads) {
-          const totalLeads = leads.length;
-          const newLeads = leads.filter((l) => l.status === 'new').length;
-          const wonLeads = leads.filter((l) => l.status === 'won').length;
-          const estimatedRevenue = leads
-            .filter((l) => l.status === 'won')
-            .reduce((sum, l) => sum + ((l.estimated_price_low + l.estimated_price_high) / 2), 0);
-
-          setStats({
-            totalLeads,
-            newLeads,
-            wonLeads,
-            estimatedRevenue,
-          });
-
-          setRecentLeads(leads.slice(0, 5));
-        }
-      } catch (error) {
-        console.error('Failed to fetch dashboard data:', error);
-      } finally {
-        setLoading(false);
-      }
-    }
-
-    fetchDashboardData();
-  }, [company, supabase]);
+    // Always use demo data
+    const demoStats = getDemoStats();
+    setStats(demoStats);
+    setRecentLeads(DEMO_LEADS.slice(0, 5) as unknown as Lead[]);
+    setLoading(false);
+  }, [company]);
 
   const conversionRate = stats.totalLeads > 0
     ? Math.round((stats.wonLeads / stats.totalLeads) * 100)

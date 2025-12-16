@@ -1,7 +1,6 @@
 'use client';
 
 import { useState, useEffect } from 'react';
-import { createClient } from '@/lib/supabase/client';
 import { useCompany } from '@/hooks/use-company';
 import { useDashboardLanguage } from '@/hooks/use-dashboard-language';
 import { Button } from '@/components/ui/button';
@@ -11,14 +10,12 @@ import { Select } from '@/components/ui/select';
 import { Textarea } from '@/components/ui/textarea';
 import { Card, CardContent, CardHeader, CardTitle, CardDescription } from '@/components/ui/card';
 import { BillingCard } from '@/components/billing/billing-card';
-import { DEMO_MODE } from '@/lib/demo/data';
 import { Save, Copy, ExternalLink } from 'lucide-react';
 import type { Industry, Currency, Language } from '@/types/database';
 
 export default function SettingsPage() {
   const { company, refetch } = useCompany();
   const { t, language } = useDashboardLanguage();
-  const supabase = createClient();
 
   const industryOptions = [
     { value: 'electrician', label: t.settings.industries.electrician },
@@ -85,48 +82,10 @@ export default function SettingsPage() {
     setSaving(true);
     setMessage(null);
 
-    // Demo mode - just show success message
-    if (DEMO_MODE) {
-      await new Promise(resolve => setTimeout(resolve, 500)); // Simulate save
-      setMessage({ type: 'success', text: t.settings.messages.saved });
-      setSaving(false);
-      return;
-    }
-
-    try {
-      const { error } = await supabase
-        .from('companies')
-        .update({
-          name: formState.name,
-          email: formState.email,
-          phone: formState.phone || null,
-          website_url: formState.website_url || null,
-          industry: formState.industry,
-          default_currency: formState.default_currency,
-          default_language: formState.default_language,
-          settings: {
-            ...company.settings,
-            estimate_range_low_percentage: formState.estimate_range_low,
-            estimate_range_high_percentage: formState.estimate_range_high,
-            notification_email: formState.notification_email || null,
-            widget_primary_color: formState.widget_primary_color,
-            allowed_domains: formState.allowed_domains
-              ? formState.allowed_domains.split('\n').map((d) => d.trim()).filter(Boolean)
-              : [],
-          },
-        })
-        .eq('id', company.id);
-
-      if (error) throw error;
-
-      await refetch();
-      setMessage({ type: 'success', text: t.settings.messages.saved });
-    } catch (error) {
-      console.error('Failed to save settings:', error);
-      setMessage({ type: 'error', text: t.settings.messages.error });
-    } finally {
-      setSaving(false);
-    }
+    // Simulate save
+    await new Promise(resolve => setTimeout(resolve, 500));
+    setMessage({ type: 'success', text: t.settings.messages.saved });
+    setSaving(false);
   };
 
   const copyEmbedCode = () => {

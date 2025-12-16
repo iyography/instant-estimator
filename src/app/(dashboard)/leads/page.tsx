@@ -2,7 +2,6 @@
 
 import { useEffect, useState } from 'react';
 import { useRouter } from 'next/navigation';
-import { createClient } from '@/lib/supabase/client';
 import { useCompany } from '@/hooks/use-company';
 import { useDashboardLanguage } from '@/hooks/use-dashboard-language';
 import { Button } from '@/components/ui/button';
@@ -13,7 +12,7 @@ import { KanbanBoard } from '@/components/crm/kanban-board';
 import { LeadValueBadge } from '@/components/crm/lead-value-badge';
 import { formatCurrency, formatDate, getStatusColor } from '@/lib/utils';
 import { calculateLeadValue } from '@/lib/lead-scoring';
-import { DEMO_MODE, DEMO_LEADS, DEMO_JOB_TYPES } from '@/lib/demo/data';
+import { DEMO_LEADS, DEMO_JOB_TYPES } from '@/lib/demo/data';
 import { Search, Download, LayoutGrid, List } from 'lucide-react';
 import type { Lead, LeadStatus, JobType, Currency } from '@/types/database';
 
@@ -29,8 +28,6 @@ export default function LeadsPage() {
   const [statusFilter, setStatusFilter] = useState('');
   const [jobTypeFilter, setJobTypeFilter] = useState('');
 
-  const supabase = createClient();
-
   const statusOptions = [
     { value: '', label: t.leads.allStatuses },
     { value: 'new', label: t.status.new },
@@ -41,100 +38,19 @@ export default function LeadsPage() {
   ];
 
   useEffect(() => {
-    async function fetchData() {
-      if (!company) return;
+    if (!company) return;
 
-      // Demo mode - use demo data
-      if (DEMO_MODE) {
-        setLeads(DEMO_LEADS as unknown as Lead[]);
-        setJobTypes(DEMO_JOB_TYPES as unknown as JobType[]);
-        setLoading(false);
-        return;
-      }
-
-      try {
-        const [leadsRes, jobTypesRes] = await Promise.all([
-          supabase
-            .from('leads')
-            .select('*')
-            .eq('company_id', company.id)
-            .order('created_at', { ascending: false }),
-          supabase
-            .from('job_types')
-            .select('*')
-            .eq('company_id', company.id),
-        ]);
-
-        if (leadsRes.data) setLeads(leadsRes.data);
-        if (jobTypesRes.data) setJobTypes(jobTypesRes.data);
-      } catch (error) {
-        console.error('Failed to fetch data:', error);
-      } finally {
-        setLoading(false);
-      }
-    }
-
-    fetchData();
-
-    // Skip real-time subscription in demo mode
-    if (DEMO_MODE) return;
-
-    // Set up real-time subscription
-    const channel = supabase
-      .channel('leads-changes')
-      .on(
-        'postgres_changes',
-        {
-          event: '*',
-          schema: 'public',
-          table: 'leads',
-          filter: `company_id=eq.${company?.id}`,
-        },
-        (payload) => {
-          if (payload.eventType === 'INSERT') {
-            setLeads((prev) => [payload.new as Lead, ...prev]);
-          } else if (payload.eventType === 'UPDATE') {
-            setLeads((prev) =>
-              prev.map((l) =>
-                l.id === payload.new.id ? (payload.new as Lead) : l
-              )
-            );
-          } else if (payload.eventType === 'DELETE') {
-            setLeads((prev) => prev.filter((l) => l.id !== payload.old.id));
-          }
-        }
-      )
-      .subscribe();
-
-    return () => {
-      supabase.removeChannel(channel);
-    };
-  }, [company, supabase]);
+    // Always use demo data
+    setLeads(DEMO_LEADS as unknown as Lead[]);
+    setJobTypes(DEMO_JOB_TYPES as unknown as JobType[]);
+    setLoading(false);
+  }, [company]);
 
   const handleStatusChange = async (leadId: string, newStatus: LeadStatus) => {
     // Update local state
     setLeads((prev) =>
       prev.map((l) => (l.id === leadId ? { ...l, status: newStatus } : l))
     );
-
-    // Demo mode - just update local state
-    if (DEMO_MODE) return;
-
-    const { error } = await supabase
-      .from('leads')
-      .update({ status: newStatus })
-      .eq('id', leadId);
-
-    if (error) {
-      // Revert on error
-      setLeads((prev) =>
-        prev.map((l) =>
-          l.id === leadId
-            ? { ...l, status: leads.find((ol) => ol.id === leadId)?.status || 'new' }
-            : l
-        )
-      );
-    }
   };
 
   const handleLeadClick = (lead: Lead) => {
