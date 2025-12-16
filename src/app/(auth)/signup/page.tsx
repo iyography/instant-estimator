@@ -115,6 +115,12 @@ export default function SignupPage() {
     );
   }
 
+  const handleDemoSignup = async () => {
+    setIsLoading(true);
+    await new Promise(resolve => setTimeout(resolve, 500));
+    router.push('/onboarding');
+  };
+
   return (
     <Card className="w-full max-w-md">
       <CardHeader>
@@ -130,6 +136,16 @@ export default function SignupPage() {
               {error}
             </div>
           )}
+          {DEMO_MODE && (
+            <Button
+              type="button"
+              className="w-full bg-gradient-to-r from-green-600 to-emerald-600 hover:from-green-700 hover:to-emerald-700"
+              onClick={handleDemoSignup}
+              isLoading={isLoading}
+            >
+              Try Demo (Skip Signup)
+            </Button>
+          )}
           <div className="space-y-2">
             <Label htmlFor="email">Email</Label>
             <Input
@@ -138,7 +154,7 @@ export default function SignupPage() {
               placeholder="name@company.com"
               value={email}
               onChange={(e) => setEmail(e.target.value)}
-              required
+              required={!DEMO_MODE}
             />
           </div>
           <div className="space-y-2">
@@ -148,8 +164,8 @@ export default function SignupPage() {
               type="password"
               value={password}
               onChange={(e) => setPassword(e.target.value)}
-              required
-              minLength={8}
+              required={!DEMO_MODE}
+              minLength={DEMO_MODE ? undefined : 8}
             />
             <p className="text-xs text-slate-500">At least 8 characters</p>
           </div>
@@ -160,7 +176,7 @@ export default function SignupPage() {
               type="password"
               value={confirmPassword}
               onChange={(e) => setConfirmPassword(e.target.value)}
-              required
+              required={!DEMO_MODE}
             />
           </div>
         </CardContent>

@@ -73,6 +73,12 @@ function LoginForm() {
     }
   };
 
+  const handleDemoLogin = async () => {
+    setIsLoading(true);
+    await new Promise(resolve => setTimeout(resolve, 500));
+    router.push(redirect);
+  };
+
   return (
     <Card className="w-full max-w-md">
       <CardHeader>
@@ -88,6 +94,16 @@ function LoginForm() {
               {error}
             </div>
           )}
+          {DEMO_MODE && (
+            <Button
+              type="button"
+              className="w-full bg-gradient-to-r from-green-600 to-emerald-600 hover:from-green-700 hover:to-emerald-700"
+              onClick={handleDemoLogin}
+              isLoading={isLoading}
+            >
+              Try Demo (Skip Login)
+            </Button>
+          )}
           <div className="space-y-2">
             <Label htmlFor="email">Email</Label>
             <Input
@@ -96,7 +112,7 @@ function LoginForm() {
               placeholder="name@company.com"
               value={email}
               onChange={(e) => setEmail(e.target.value)}
-              required
+              required={!DEMO_MODE}
             />
           </div>
           <div className="space-y-2">
@@ -106,7 +122,7 @@ function LoginForm() {
               type="password"
               value={password}
               onChange={(e) => setPassword(e.target.value)}
-              required
+              required={!DEMO_MODE}
             />
           </div>
         </CardContent>
