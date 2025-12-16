@@ -58,7 +58,7 @@ export default function LoginPage() {
           </div>
         </CardContent>
         <CardFooter className="flex flex-col space-y-4">
-          <Button type="submit" className="w-full" isLoading={isLoading}>
+          <Button type="submit" className="w-full bg-white text-slate-900 border border-slate-300 hover:bg-slate-50" isLoading={isLoading}>
             Sign In
           </Button>
           <div className="relative w-full">
