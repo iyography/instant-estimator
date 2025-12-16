@@ -4,6 +4,7 @@ import { useState, Suspense } from 'react';
 import { useRouter, useSearchParams } from 'next/navigation';
 import Link from 'next/link';
 import { createClient } from '@/lib/supabase/client';
+import { DEMO_MODE } from '@/lib/demo/data';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
@@ -25,6 +26,13 @@ function LoginForm() {
     setIsLoading(true);
     setError(null);
 
+    // Demo mode - just redirect to dashboard
+    if (DEMO_MODE) {
+      await new Promise(resolve => setTimeout(resolve, 500));
+      router.push(redirect);
+      return;
+    }
+
     const { error } = await supabase.auth.signInWithPassword({
       email,
       password,
@@ -41,6 +49,14 @@ function LoginForm() {
   };
 
   const handleGoogleLogin = async () => {
+    // Demo mode - just redirect to dashboard
+    if (DEMO_MODE) {
+      setIsLoading(true);
+      await new Promise(resolve => setTimeout(resolve, 500));
+      router.push(redirect);
+      return;
+    }
+
     setIsLoading(true);
     setError(null);
 

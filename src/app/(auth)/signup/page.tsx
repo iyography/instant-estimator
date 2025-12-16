@@ -4,6 +4,7 @@ import { useState } from 'react';
 import { useRouter } from 'next/navigation';
 import Link from 'next/link';
 import { createClient } from '@/lib/supabase/client';
+import { DEMO_MODE } from '@/lib/demo/data';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
@@ -24,6 +25,13 @@ export default function SignupPage() {
     e.preventDefault();
     setIsLoading(true);
     setError(null);
+
+    // Demo mode - redirect directly to onboarding
+    if (DEMO_MODE) {
+      await new Promise(resolve => setTimeout(resolve, 500));
+      router.push('/onboarding');
+      return;
+    }
 
     if (password !== confirmPassword) {
       setError('Passwords do not match');
@@ -56,6 +64,14 @@ export default function SignupPage() {
   };
 
   const handleGoogleSignup = async () => {
+    // Demo mode - redirect directly to onboarding
+    if (DEMO_MODE) {
+      setIsLoading(true);
+      await new Promise(resolve => setTimeout(resolve, 500));
+      router.push('/onboarding');
+      return;
+    }
+
     setIsLoading(true);
     setError(null);
 

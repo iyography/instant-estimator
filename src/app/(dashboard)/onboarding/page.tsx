@@ -4,6 +4,7 @@ import { useState, useEffect } from 'react';
 import { useRouter } from 'next/navigation';
 import { createClient } from '@/lib/supabase/client';
 import { useDashboardLanguage } from '@/hooks/use-dashboard-language';
+import { DEMO_MODE, DEMO_COMPANY } from '@/lib/demo/data';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
@@ -77,6 +78,11 @@ export default function OnboardingPage() {
   // Check if user already has a company
   useEffect(() => {
     async function checkCompany() {
+      // Demo mode - skip auth check, don't auto-redirect to final step
+      if (DEMO_MODE) {
+        return;
+      }
+
       const { data: { user } } = await supabase.auth.getUser();
       if (!user) {
         router.push('/login');
@@ -111,6 +117,23 @@ export default function OnboardingPage() {
 
   const handleCreateCompany = async () => {
     setLoading(true);
+
+    // Demo mode - simulate company creation
+    if (DEMO_MODE) {
+      await new Promise(resolve => setTimeout(resolve, 1500));
+      const demoCompany = {
+        ...DEMO_COMPANY,
+        name: state.companyName || DEMO_COMPANY.name,
+        slug: generateSlug(state.companyName || DEMO_COMPANY.name),
+        industry: state.industry,
+        default_currency: state.currency,
+        default_language: state.language,
+      } as unknown as Company;
+      setCompany(demoCompany);
+      setLoading(false);
+      handleNext();
+      return;
+    }
 
     try {
       const { data: { user } } = await supabase.auth.getUser();
