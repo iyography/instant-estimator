@@ -134,22 +134,83 @@ function MeshGradientBackground() {
         }}
       />
 
-      {/* Many floating particles - spread across the hero */}
-      <div className="absolute top-16 left-[15%] h-2 w-2 rounded-full bg-indigo-500/60 animate-float" />
-      <div className="absolute top-24 left-[25%] h-1.5 w-1.5 rounded-full bg-purple-400/50 animate-float animation-delay-500" />
-      <div className="absolute top-32 right-[35%] h-3 w-3 rounded-full bg-pink-400/50 animate-float animation-delay-1000" />
-      <div className="absolute top-20 right-[20%] h-2 w-2 rounded-full bg-cyan-400/60 animate-float animation-delay-1500" />
-      <div className="absolute top-48 left-[35%] h-2 w-2 rounded-full bg-blue-500/50 animate-float animation-delay-2000" />
-      <div className="absolute top-36 right-[45%] h-1.5 w-1.5 rounded-full bg-violet-400/60 animate-float animation-delay-2500" />
-      <div className="absolute top-56 left-[55%] h-2.5 w-2.5 rounded-full bg-rose-400/50 animate-float animation-delay-3000" />
-      <div className="absolute top-28 left-[70%] h-2 w-2 rounded-full bg-emerald-400/50 animate-float animation-delay-3500" />
-      <div className="absolute top-64 right-[25%] h-1.5 w-1.5 rounded-full bg-amber-400/60 animate-float animation-delay-4000" />
-      <div className="absolute top-44 left-[10%] h-2 w-2 rounded-full bg-fuchsia-400/50 animate-float animation-delay-500" />
-      <div className="absolute top-72 right-[15%] h-2.5 w-2.5 rounded-full bg-sky-400/60 animate-float animation-delay-1000" />
-      <div className="absolute top-80 left-[45%] h-1.5 w-1.5 rounded-full bg-indigo-400/50 animate-float animation-delay-1500" />
-      <div className="absolute top-[85%] left-[20%] h-2 w-2 rounded-full bg-purple-500/50 animate-float animation-delay-2000" />
-      <div className="absolute top-[90%] right-[30%] h-2 w-2 rounded-full bg-pink-500/60 animate-float animation-delay-2500" />
-      <div className="absolute top-[75%] left-[60%] h-1.5 w-1.5 rounded-full bg-cyan-500/50 animate-float animation-delay-3000" />
+      {/* Many tiny floating particles rising upward - spread across the hero */}
+      {/* Row 1 - bottom */}
+      <div className="absolute bottom-[5%] left-[3%] h-0.5 w-0.5 rounded-full bg-indigo-400/70 animate-float-up" />
+      <div className="absolute bottom-[8%] left-[7%] h-1 w-1 rounded-full bg-purple-400/60 animate-float-up animation-delay-500" />
+      <div className="absolute bottom-[3%] left-[12%] h-0.5 w-0.5 rounded-full bg-pink-400/70 animate-float-up animation-delay-1000" />
+      <div className="absolute bottom-[10%] left-[18%] h-1 w-1 rounded-full bg-cyan-400/60 animate-float-up animation-delay-1500" />
+      <div className="absolute bottom-[6%] left-[23%] h-0.5 w-0.5 rounded-full bg-blue-400/70 animate-float-up animation-delay-2000" />
+      <div className="absolute bottom-[4%] left-[28%] h-1 w-1 rounded-full bg-violet-400/60 animate-float-up animation-delay-2500" />
+      <div className="absolute bottom-[9%] left-[33%] h-0.5 w-0.5 rounded-full bg-rose-400/70 animate-float-up animation-delay-3000" />
+      <div className="absolute bottom-[7%] left-[38%] h-1 w-1 rounded-full bg-emerald-400/60 animate-float-up animation-delay-3500" />
+      <div className="absolute bottom-[5%] left-[43%] h-0.5 w-0.5 rounded-full bg-amber-400/70 animate-float-up animation-delay-4000" />
+      <div className="absolute bottom-[8%] left-[48%] h-1 w-1 rounded-full bg-fuchsia-400/60 animate-float-up animation-delay-4500" />
+      <div className="absolute bottom-[3%] left-[53%] h-0.5 w-0.5 rounded-full bg-sky-400/70 animate-float-up animation-delay-5000" />
+      <div className="absolute bottom-[6%] left-[58%] h-1 w-1 rounded-full bg-indigo-400/60 animate-float-up animation-delay-5500" />
+      <div className="absolute bottom-[10%] left-[63%] h-0.5 w-0.5 rounded-full bg-purple-400/70 animate-float-up animation-delay-6000" />
+      <div className="absolute bottom-[4%] left-[68%] h-1 w-1 rounded-full bg-pink-400/60 animate-float-up animation-delay-6500" />
+      <div className="absolute bottom-[7%] left-[73%] h-0.5 w-0.5 rounded-full bg-cyan-400/70 animate-float-up animation-delay-7000" />
+      <div className="absolute bottom-[9%] left-[78%] h-1 w-1 rounded-full bg-blue-400/60 animate-float-up animation-delay-7500" />
+      <div className="absolute bottom-[5%] left-[83%] h-0.5 w-0.5 rounded-full bg-violet-400/70 animate-float-up animation-delay-500" />
+      <div className="absolute bottom-[8%] left-[88%] h-1 w-1 rounded-full bg-rose-400/60 animate-float-up animation-delay-1000" />
+      <div className="absolute bottom-[6%] left-[93%] h-0.5 w-0.5 rounded-full bg-emerald-400/70 animate-float-up animation-delay-1500" />
+      <div className="absolute bottom-[4%] left-[97%] h-1 w-1 rounded-full bg-amber-400/60 animate-float-up animation-delay-2000" />
+      {/* Row 2 */}
+      <div className="absolute bottom-[15%] left-[5%] h-1 w-1 rounded-full bg-fuchsia-400/60 animate-float-up animation-delay-2500" />
+      <div className="absolute bottom-[18%] left-[10%] h-0.5 w-0.5 rounded-full bg-sky-400/70 animate-float-up animation-delay-3000" />
+      <div className="absolute bottom-[12%] left-[15%] h-1 w-1 rounded-full bg-indigo-400/60 animate-float-up animation-delay-3500" />
+      <div className="absolute bottom-[20%] left-[20%] h-0.5 w-0.5 rounded-full bg-purple-400/70 animate-float-up animation-delay-4000" />
+      <div className="absolute bottom-[16%] left-[25%] h-1 w-1 rounded-full bg-pink-400/60 animate-float-up animation-delay-4500" />
+      <div className="absolute bottom-[14%] left-[30%] h-0.5 w-0.5 rounded-full bg-cyan-400/70 animate-float-up animation-delay-5000" />
+      <div className="absolute bottom-[19%] left-[35%] h-1 w-1 rounded-full bg-blue-400/60 animate-float-up animation-delay-5500" />
+      <div className="absolute bottom-[17%] left-[40%] h-0.5 w-0.5 rounded-full bg-violet-400/70 animate-float-up animation-delay-6000" />
+      <div className="absolute bottom-[13%] left-[45%] h-1 w-1 rounded-full bg-rose-400/60 animate-float-up animation-delay-6500" />
+      <div className="absolute bottom-[21%] left-[50%] h-0.5 w-0.5 rounded-full bg-emerald-400/70 animate-float-up animation-delay-7000" />
+      <div className="absolute bottom-[15%] left-[55%] h-1 w-1 rounded-full bg-amber-400/60 animate-float-up animation-delay-7500" />
+      <div className="absolute bottom-[18%] left-[60%] h-0.5 w-0.5 rounded-full bg-fuchsia-400/70 animate-float-up" />
+      <div className="absolute bottom-[12%] left-[65%] h-1 w-1 rounded-full bg-sky-400/60 animate-float-up animation-delay-500" />
+      <div className="absolute bottom-[20%] left-[70%] h-0.5 w-0.5 rounded-full bg-indigo-400/70 animate-float-up animation-delay-1000" />
+      <div className="absolute bottom-[16%] left-[75%] h-1 w-1 rounded-full bg-purple-400/60 animate-float-up animation-delay-1500" />
+      <div className="absolute bottom-[14%] left-[80%] h-0.5 w-0.5 rounded-full bg-pink-400/70 animate-float-up animation-delay-2000" />
+      <div className="absolute bottom-[19%] left-[85%] h-1 w-1 rounded-full bg-cyan-400/60 animate-float-up animation-delay-2500" />
+      <div className="absolute bottom-[17%] left-[90%] h-0.5 w-0.5 rounded-full bg-blue-400/70 animate-float-up animation-delay-3000" />
+      <div className="absolute bottom-[13%] left-[95%] h-1 w-1 rounded-full bg-violet-400/60 animate-float-up animation-delay-3500" />
+      {/* Row 3 */}
+      <div className="absolute bottom-[25%] left-[2%] h-0.5 w-0.5 rounded-full bg-rose-400/70 animate-float-up animation-delay-4000" />
+      <div className="absolute bottom-[28%] left-[8%] h-1 w-1 rounded-full bg-emerald-400/60 animate-float-up animation-delay-4500" />
+      <div className="absolute bottom-[23%] left-[14%] h-0.5 w-0.5 rounded-full bg-amber-400/70 animate-float-up animation-delay-5000" />
+      <div className="absolute bottom-[30%] left-[22%] h-1 w-1 rounded-full bg-fuchsia-400/60 animate-float-up animation-delay-5500" />
+      <div className="absolute bottom-[26%] left-[27%] h-0.5 w-0.5 rounded-full bg-sky-400/70 animate-float-up animation-delay-6000" />
+      <div className="absolute bottom-[24%] left-[32%] h-1 w-1 rounded-full bg-indigo-400/60 animate-float-up animation-delay-6500" />
+      <div className="absolute bottom-[29%] left-[37%] h-0.5 w-0.5 rounded-full bg-purple-400/70 animate-float-up animation-delay-7000" />
+      <div className="absolute bottom-[27%] left-[42%] h-1 w-1 rounded-full bg-pink-400/60 animate-float-up animation-delay-7500" />
+      <div className="absolute bottom-[22%] left-[47%] h-0.5 w-0.5 rounded-full bg-cyan-400/70 animate-float-up" />
+      <div className="absolute bottom-[31%] left-[52%] h-1 w-1 rounded-full bg-blue-400/60 animate-float-up animation-delay-500" />
+      <div className="absolute bottom-[25%] left-[57%] h-0.5 w-0.5 rounded-full bg-violet-400/70 animate-float-up animation-delay-1000" />
+      <div className="absolute bottom-[28%] left-[62%] h-1 w-1 rounded-full bg-rose-400/60 animate-float-up animation-delay-1500" />
+      <div className="absolute bottom-[23%] left-[67%] h-0.5 w-0.5 rounded-full bg-emerald-400/70 animate-float-up animation-delay-2000" />
+      <div className="absolute bottom-[30%] left-[72%] h-1 w-1 rounded-full bg-amber-400/60 animate-float-up animation-delay-2500" />
+      <div className="absolute bottom-[26%] left-[77%] h-0.5 w-0.5 rounded-full bg-fuchsia-400/70 animate-float-up animation-delay-3000" />
+      <div className="absolute bottom-[24%] left-[82%] h-1 w-1 rounded-full bg-sky-400/60 animate-float-up animation-delay-3500" />
+      <div className="absolute bottom-[29%] left-[87%] h-0.5 w-0.5 rounded-full bg-indigo-400/70 animate-float-up animation-delay-4000" />
+      <div className="absolute bottom-[27%] left-[92%] h-1 w-1 rounded-full bg-purple-400/60 animate-float-up animation-delay-4500" />
+      {/* Row 4 - mid section */}
+      <div className="absolute bottom-[35%] left-[4%] h-1 w-1 rounded-full bg-pink-400/60 animate-float-up animation-delay-5000" />
+      <div className="absolute bottom-[38%] left-[11%] h-0.5 w-0.5 rounded-full bg-cyan-400/70 animate-float-up animation-delay-5500" />
+      <div className="absolute bottom-[33%] left-[17%] h-1 w-1 rounded-full bg-blue-400/60 animate-float-up animation-delay-6000" />
+      <div className="absolute bottom-[40%] left-[24%] h-0.5 w-0.5 rounded-full bg-violet-400/70 animate-float-up animation-delay-6500" />
+      <div className="absolute bottom-[36%] left-[31%] h-1 w-1 rounded-full bg-rose-400/60 animate-float-up animation-delay-7000" />
+      <div className="absolute bottom-[34%] left-[38%] h-0.5 w-0.5 rounded-full bg-emerald-400/70 animate-float-up animation-delay-7500" />
+      <div className="absolute bottom-[39%] left-[44%] h-1 w-1 rounded-full bg-amber-400/60 animate-float-up" />
+      <div className="absolute bottom-[37%] left-[51%] h-0.5 w-0.5 rounded-full bg-fuchsia-400/70 animate-float-up animation-delay-500" />
+      <div className="absolute bottom-[32%] left-[58%] h-1 w-1 rounded-full bg-sky-400/60 animate-float-up animation-delay-1000" />
+      <div className="absolute bottom-[41%] left-[64%] h-0.5 w-0.5 rounded-full bg-indigo-400/70 animate-float-up animation-delay-1500" />
+      <div className="absolute bottom-[35%] left-[71%] h-1 w-1 rounded-full bg-purple-400/60 animate-float-up animation-delay-2000" />
+      <div className="absolute bottom-[38%] left-[78%] h-0.5 w-0.5 rounded-full bg-pink-400/70 animate-float-up animation-delay-2500" />
+      <div className="absolute bottom-[33%] left-[84%] h-1 w-1 rounded-full bg-cyan-400/60 animate-float-up animation-delay-3000" />
+      <div className="absolute bottom-[40%] left-[91%] h-0.5 w-0.5 rounded-full bg-blue-400/70 animate-float-up animation-delay-3500" />
+      <div className="absolute bottom-[36%] left-[96%] h-1 w-1 rounded-full bg-violet-400/60 animate-float-up animation-delay-4000" />
 
       {/* Glowing accent lines */}
       <div className="absolute top-1/4 left-0 right-0 h-px bg-gradient-to-r from-transparent via-purple-400/30 to-transparent" />
@@ -239,9 +300,11 @@ export default function HomePage() {
           50% { transform: translate(-30px, 30px) scale(0.92); }
           75% { transform: translate(40px, 15px) scale(1.04); }
         }
-        @keyframes float {
-          0%, 100% { transform: translateY(0px); opacity: 0.5; }
-          50% { transform: translateY(-25px); opacity: 0.9; }
+        @keyframes float-up {
+          0% { transform: translateY(0px); opacity: 0; }
+          10% { opacity: 0.7; }
+          90% { opacity: 0.7; }
+          100% { transform: translateY(-100vh); opacity: 0; }
         }
         @keyframes pulse-glow {
           0%, 100% { opacity: 0.4; transform: scale(1); }
@@ -258,17 +321,28 @@ export default function HomePage() {
         .animate-blob {
           animation: blob 20s ease-in-out infinite;
         }
-        .animate-float {
-          animation: float 6s ease-in-out infinite;
+        .animate-float-up {
+          animation: float-up 8s linear infinite;
         }
         .animate-shimmer {
           animation: shimmer 3s ease-in-out infinite;
           background-size: 200% 100%;
         }
+        .animation-delay-500 { animation-delay: 0.5s; }
         .animation-delay-1000 { animation-delay: 1s; }
+        .animation-delay-1500 { animation-delay: 1.5s; }
         .animation-delay-2000 { animation-delay: 2s; }
+        .animation-delay-2500 { animation-delay: 2.5s; }
         .animation-delay-3000 { animation-delay: 3s; }
+        .animation-delay-3500 { animation-delay: 3.5s; }
         .animation-delay-4000 { animation-delay: 4s; }
+        .animation-delay-4500 { animation-delay: 4.5s; }
+        .animation-delay-5000 { animation-delay: 5s; }
+        .animation-delay-5500 { animation-delay: 5.5s; }
+        .animation-delay-6000 { animation-delay: 6s; }
+        .animation-delay-6500 { animation-delay: 6.5s; }
+        .animation-delay-7000 { animation-delay: 7s; }
+        .animation-delay-7500 { animation-delay: 7.5s; }
         .animate-fade-in-up {
           animation: fadeInUp 0.8s ease-out forwards;
         }
