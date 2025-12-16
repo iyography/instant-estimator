@@ -2,6 +2,7 @@
 
 import { useEffect, useState } from 'react';
 import { createClient } from '@/lib/supabase/client';
+import { DEMO_MODE, DEMO_COMPANY } from '@/lib/demo/data';
 import type { Company } from '@/types/database';
 
 export function useCompany() {
@@ -13,6 +14,13 @@ export function useCompany() {
 
   useEffect(() => {
     async function fetchCompany() {
+      // Demo mode - return demo company immediately
+      if (DEMO_MODE) {
+        setCompany(DEMO_COMPANY as unknown as Company);
+        setLoading(false);
+        return;
+      }
+
       try {
         const { data: { user } } = await supabase.auth.getUser();
 
@@ -43,6 +51,11 @@ export function useCompany() {
   }, [supabase]);
 
   const refetch = async () => {
+    // Demo mode - just return
+    if (DEMO_MODE) {
+      return;
+    }
+
     setLoading(true);
     try {
       const { data: { user } } = await supabase.auth.getUser();

@@ -20,6 +20,7 @@ export const dashboardTranslations = {
       required: 'Required',
       optional: 'Optional',
       or: 'or',
+      open: 'Open',
     },
 
     // Navigation
@@ -256,13 +257,41 @@ export const dashboardTranslations = {
       moreLeads: '+{count} more in list view',
     },
 
+    // Lead detail page
+    leadDetail: {
+      contactInfo: 'Contact Information',
+      statusEstimate: 'Status & Estimate',
+      priceEstimate: 'Price Estimate',
+      created: 'Created',
+      source: 'Source',
+      responses: 'Responses',
+      notes: 'Notes',
+      notesPlaceholder: 'Add notes about this lead...',
+    },
+
     // Forms
     forms: {
-      title: 'Forms',
-      subtitle: 'Manage your estimator forms',
+      title: 'Job Types',
+      subtitle: 'Manage your job types and questions',
       createNew: 'Create new form',
       noForms: 'No forms yet',
       createFirst: 'Create your first estimator form',
+      newJobType: 'New job type',
+      noJobTypes: 'No job types yet',
+      createFirstJobType: 'Create your first job type to get started',
+      createJobType: 'Create job type',
+      basePrice: 'Base price',
+      active: 'Active',
+      inactive: 'Inactive',
+      editQuestions: 'Edit questions',
+      estimatorForms: 'Estimator Forms',
+      customFormsDescription: 'Custom forms for different purposes',
+      newForm: 'New form',
+      defaultFormDescription: 'Your default form uses all active job types.',
+      publicLink: 'Public Link',
+      copyEmbedCode: 'Copy embed code',
+      copyCode: 'Copy code',
+      confirmDelete: 'Are you sure you want to delete this job type?',
       formBuilder: {
         title: 'Form Builder',
         addQuestion: 'Add Question',
@@ -301,6 +330,7 @@ export const dashboardTranslations = {
       required: 'Obligatorisk',
       optional: 'Valfritt',
       or: 'eller',
+      open: 'Oppna',
     },
 
     // Navigation
@@ -537,13 +567,41 @@ export const dashboardTranslations = {
       moreLeads: '+{count} fler i listvyn',
     },
 
+    // Lead detail page
+    leadDetail: {
+      contactInfo: 'Kontaktinformation',
+      statusEstimate: 'Status & Uppskattning',
+      priceEstimate: 'Prisuppskattning',
+      created: 'Skapad',
+      source: 'Kalla',
+      responses: 'Svar',
+      notes: 'Anteckningar',
+      notesPlaceholder: 'Lagg till anteckningar om denna lead...',
+    },
+
     // Forms
     forms: {
-      title: 'Formular',
-      subtitle: 'Hantera dina estimatorformular',
+      title: 'Jobbtyper',
+      subtitle: 'Hantera dina jobbtyper och fragor',
       createNew: 'Skapa nytt formular',
       noForms: 'Inga formular annu',
       createFirst: 'Skapa ditt forsta estimatorformular',
+      newJobType: 'Ny jobbtyp',
+      noJobTypes: 'Inga jobbtyper annu',
+      createFirstJobType: 'Skapa din forsta jobbtyp for att komma igang',
+      createJobType: 'Skapa jobbtyp',
+      basePrice: 'Baspris',
+      active: 'Aktiv',
+      inactive: 'Inaktiv',
+      editQuestions: 'Redigera fragor',
+      estimatorForms: 'Estimatorformular',
+      customFormsDescription: 'Anpassade formular for olika andamal',
+      newForm: 'Nytt formular',
+      defaultFormDescription: 'Ditt standardformular anvander alla aktiva jobbtyper.',
+      publicLink: 'Publik lank',
+      copyEmbedCode: 'Kopiera inbaddningskod',
+      copyCode: 'Kopiera kod',
+      confirmDelete: 'Ar du saker pa att du vill ta bort denna jobbtyp?',
       formBuilder: {
         title: 'Formularbyggare',
         addQuestion: 'Lagg till fraga',
@@ -613,12 +671,29 @@ type TranslationsStructure = {
     columns: { [key: string]: string };
     moreLeads: string;
   };
+  leadDetail: { [key: string]: string };
   forms: {
     title: string;
     subtitle: string;
     createNew: string;
     noForms: string;
     createFirst: string;
+    newJobType: string;
+    noJobTypes: string;
+    createFirstJobType: string;
+    createJobType: string;
+    basePrice: string;
+    active: string;
+    inactive: string;
+    editQuestions: string;
+    estimatorForms: string;
+    customFormsDescription: string;
+    newForm: string;
+    defaultFormDescription: string;
+    publicLink: string;
+    copyEmbedCode: string;
+    copyCode: string;
+    confirmDelete: string;
     formBuilder: { [key: string]: string };
   };
 };

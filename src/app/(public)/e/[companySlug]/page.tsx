@@ -1,6 +1,7 @@
 import { notFound } from 'next/navigation';
 import { createServiceClient } from '@/lib/supabase/server';
 import { EstimatorPage } from '@/components/estimator/estimator-page';
+import { DEMO_MODE, DEMO_COMPANY, DEMO_JOB_TYPES, DEMO_QUESTIONS, DEMO_ANSWERS } from '@/lib/demo/data';
 
 interface Props {
   params: Promise<{
@@ -8,8 +9,32 @@ interface Props {
   }>;
 }
 
+// Build demo job types with nested questions and answers
+function getDemoJobTypesWithQuestions() {
+  return DEMO_JOB_TYPES.filter(jt => jt.is_active).map(jt => {
+    const questions = DEMO_QUESTIONS.filter(q => q.job_type_id === jt.id).map(q => ({
+      ...q,
+      answer_options: DEMO_ANSWERS.filter(a => a.question_id === q.id).sort(
+        (a, b) => a.display_order - b.display_order
+      ),
+    })).sort((a, b) => a.display_order - b.display_order);
+
+    return {
+      ...jt,
+      questions,
+    };
+  });
+}
+
 export default async function PublicEstimatorPage({ params }: Props) {
   const { companySlug } = await params;
+
+  // Demo mode - check for demo company slug
+  if (DEMO_MODE && companySlug === DEMO_COMPANY.slug) {
+    const demoJobTypes = getDemoJobTypesWithQuestions();
+    return <EstimatorPage company={DEMO_COMPANY as any} jobTypes={demoJobTypes as any} />;
+  }
+
   const supabase = await createServiceClient();
 
   // Fetch company by slug
@@ -20,6 +45,11 @@ export default async function PublicEstimatorPage({ params }: Props) {
     .single();
 
   if (companyError || !company) {
+    // In demo mode, redirect unknown slugs to demo company
+    if (DEMO_MODE) {
+      const demoJobTypes = getDemoJobTypesWithQuestions();
+      return <EstimatorPage company={DEMO_COMPANY as any} jobTypes={demoJobTypes as any} />;
+    }
     notFound();
   }
 
@@ -60,10 +90,10 @@ export default async function PublicEstimatorPage({ params }: Props) {
       <div className="flex min-h-screen items-center justify-center bg-slate-50 p-4">
         <div className="text-center">
           <h1 className="text-2xl font-bold text-slate-900">
-            Ingen estimator tillganglig
+            No estimator available
           </h1>
           <p className="mt-2 text-slate-600">
-            Det finns inga aktiva jobbtyper for denna entreprenor.
+            There are no active job types for this contractor.
           </p>
         </div>
       </div>
@@ -75,6 +105,15 @@ export default async function PublicEstimatorPage({ params }: Props) {
 
 export async function generateMetadata({ params }: Props) {
   const { companySlug } = await params;
+
+  // Demo mode
+  if (DEMO_MODE && (companySlug === DEMO_COMPANY.slug || !companySlug)) {
+    return {
+      title: `Get Price Estimate - ${DEMO_COMPANY.name}`,
+      description: 'Get an instant price estimate for your project.',
+    };
+  }
+
   const supabase = await createServiceClient();
 
   const { data: company } = await supabase
@@ -85,8 +124,8 @@ export async function generateMetadata({ params }: Props) {
 
   return {
     title: company
-      ? `Fa prisuppskattning - ${company.name}`
-      : 'Fa prisuppskattning',
-    description: 'Fa en direkt prisuppskattning for ditt projekt.',
+      ? `Get Price Estimate - ${company.name}`
+      : 'Get Price Estimate',
+    description: 'Get an instant price estimate for your project.',
   };
 }

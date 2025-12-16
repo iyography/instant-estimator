@@ -4,15 +4,18 @@ import { useEffect, useState } from 'react';
 import Link from 'next/link';
 import { createClient } from '@/lib/supabase/client';
 import { useCompany } from '@/hooks/use-company';
+import { useDashboardLanguage } from '@/hooks/use-dashboard-language';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { Badge } from '@/components/ui/badge';
 import { formatCurrency } from '@/lib/utils';
+import { DEMO_MODE, DEMO_JOB_TYPES, DEMO_FORMS } from '@/lib/demo/data';
 import { Plus, FileText, MoreVertical, Copy, ExternalLink, Pencil, Trash2 } from 'lucide-react';
 import type { JobType, EstimatorForm } from '@/types/database';
 
 export default function FormsPage() {
   const { company } = useCompany();
+  const { t, language } = useDashboardLanguage();
   const [jobTypes, setJobTypes] = useState<JobType[]>([]);
   const [forms, setForms] = useState<EstimatorForm[]>([]);
   const [loading, setLoading] = useState(true);
@@ -23,6 +26,14 @@ export default function FormsPage() {
   useEffect(() => {
     async function fetchData() {
       if (!company) return;
+
+      // Demo mode - use demo data
+      if (DEMO_MODE) {
+        setJobTypes(DEMO_JOB_TYPES as unknown as JobType[]);
+        setForms(DEMO_FORMS as unknown as EstimatorForm[]);
+        setLoading(false);
+        return;
+      }
 
       try {
         const [jobTypesRes, formsRes] = await Promise.all([
@@ -51,7 +62,14 @@ export default function FormsPage() {
   }, [company, supabase]);
 
   const handleDeleteJobType = async (id: string) => {
-    if (!confirm('Ar du saker pa att du vill ta bort denna jobbtyp?')) return;
+    if (!confirm(t.forms.confirmDelete)) return;
+
+    // Demo mode - just update local state
+    if (DEMO_MODE) {
+      setJobTypes(jobTypes.filter((jt) => jt.id !== id));
+      setActiveMenu(null);
+      return;
+    }
 
     const { error } = await supabase.from('job_types').delete().eq('id', id);
 
@@ -81,13 +99,13 @@ export default function FormsPage() {
       <div>
         <div className="mb-4 flex items-center justify-between">
           <div>
-            <h1 className="text-2xl font-bold text-slate-900">Jobbtyper</h1>
-            <p className="text-slate-600">Hantera dina jobbtyper och fragor</p>
+            <h1 className="text-2xl font-bold text-slate-900">{t.forms.title}</h1>
+            <p className="text-slate-600">{t.forms.subtitle}</p>
           </div>
           <Link href="/forms/new">
             <Button>
               <Plus className="mr-2 h-4 w-4" />
-              Ny jobbtyp
+              {t.forms.newJobType}
             </Button>
           </Link>
         </div>
@@ -97,15 +115,15 @@ export default function FormsPage() {
             <CardContent className="flex flex-col items-center justify-center py-12">
               <FileText className="h-12 w-12 text-slate-300" />
               <h3 className="mt-4 text-lg font-medium text-slate-900">
-                Inga jobbtyper annu
+                {t.forms.noJobTypes}
               </h3>
               <p className="mt-1 text-slate-600">
-                Skapa din forsta jobbtyp for att komma igang
+                {t.forms.createFirstJobType}
               </p>
               <Link href="/forms/new" className="mt-4">
                 <Button>
                   <Plus className="mr-2 h-4 w-4" />
-                  Skapa jobbtyp
+                  {t.forms.createJobType}
                 </Button>
               </Link>
             </CardContent>
@@ -142,14 +160,14 @@ export default function FormsPage() {
                           onClick={() => setActiveMenu(null)}
                         >
                           <Pencil className="mr-2 h-4 w-4" />
-                          Redigera
+                          {t.common.edit}
                         </Link>
                         <button
                           className="flex w-full items-center px-4 py-2 text-sm text-red-600 hover:bg-slate-50"
                           onClick={() => handleDeleteJobType(jobType.id)}
                         >
                           <Trash2 className="mr-2 h-4 w-4" />
-                          Ta bort
+                          {t.common.delete}
                         </button>
                       </div>
                     )}
@@ -158,22 +176,22 @@ export default function FormsPage() {
                 <CardContent>
                   <div className="flex items-center justify-between">
                     <div>
-                      <p className="text-sm text-slate-500">Baspris</p>
+                      <p className="text-sm text-slate-500">{t.forms.basePrice}</p>
                       <p className="font-semibold">
                         {formatCurrency(
                           jobType.base_price,
-                          company?.default_currency || 'SEK',
-                          company?.default_language || 'sv'
+                          company?.default_currency || 'USD',
+                          language
                         )}
                       </p>
                     </div>
                     <Badge variant={jobType.is_active ? 'success' : 'secondary'}>
-                      {jobType.is_active ? 'Aktiv' : 'Inaktiv'}
+                      {jobType.is_active ? t.forms.active : t.forms.inactive}
                     </Badge>
                   </div>
                   <Link href={`/forms/${jobType.id}`}>
                     <Button variant="outline" className="mt-4 w-full">
-                      Redigera fragor
+                      {t.forms.editQuestions}
                     </Button>
                   </Link>
                 </CardContent>
@@ -187,14 +205,14 @@ export default function FormsPage() {
       <div>
         <div className="mb-4 flex items-center justify-between">
           <div>
-            <h2 className="text-xl font-bold text-slate-900">Estimatorformular</h2>
+            <h2 className="text-xl font-bold text-slate-900">{t.forms.estimatorForms}</h2>
             <p className="text-slate-600">
-              Anpassade formular for olika andamal
+              {t.forms.customFormsDescription}
             </p>
           </div>
           <Button variant="outline" disabled={jobTypes.length === 0}>
             <Plus className="mr-2 h-4 w-4" />
-            Nytt formular
+            {t.forms.newForm}
           </Button>
         </div>
 
@@ -202,17 +220,17 @@ export default function FormsPage() {
           <Card>
             <CardContent className="py-8 text-center">
               <p className="text-slate-600">
-                Ditt standardformular anvander alla aktiva jobbtyper.
+                {t.forms.defaultFormDescription}
               </p>
               <div className="mt-4 rounded-md bg-slate-100 p-4">
-                <p className="mb-2 text-sm font-medium">Publik lank</p>
+                <p className="mb-2 text-sm font-medium">{t.forms.publicLink}</p>
                 <a
-                  href={`${window.location.origin}/e/${company?.slug}`}
+                  href={`${typeof window !== 'undefined' ? window.location.origin : ''}/e/${company?.slug}`}
                   target="_blank"
                   rel="noopener noreferrer"
                   className="flex items-center justify-center text-blue-600 hover:underline"
                 >
-                  {window.location.origin}/e/{company?.slug}
+                  {typeof window !== 'undefined' ? window.location.origin : ''}/e/{company?.slug}
                   <ExternalLink className="ml-1 h-4 w-4" />
                 </a>
               </div>
@@ -225,7 +243,7 @@ export default function FormsPage() {
                 }}
               >
                 <Copy className="mr-2 h-4 w-4" />
-                Kopiera inbaddningskod
+                {t.forms.copyEmbedCode}
               </Button>
             </CardContent>
           </Card>
@@ -241,7 +259,7 @@ export default function FormsPage() {
                     <p className="text-sm text-slate-500">/{form.slug}</p>
                   </div>
                   <Badge variant={form.is_active ? 'success' : 'secondary'}>
-                    {form.is_active ? 'Aktiv' : 'Inaktiv'}
+                    {form.is_active ? t.forms.active : t.forms.inactive}
                   </Badge>
                 </CardHeader>
                 <CardContent className="space-y-2">
@@ -251,16 +269,16 @@ export default function FormsPage() {
                     onClick={() => copyEmbedCode(form.slug)}
                   >
                     <Copy className="mr-2 h-4 w-4" />
-                    Kopiera kod
+                    {t.forms.copyCode}
                   </Button>
                   <a
-                    href={`${window.location.origin}/e/${company?.slug}/${form.slug}`}
+                    href={`${typeof window !== 'undefined' ? window.location.origin : ''}/e/${company?.slug}/${form.slug}`}
                     target="_blank"
                     rel="noopener noreferrer"
                   >
                     <Button variant="ghost" className="w-full">
                       <ExternalLink className="mr-2 h-4 w-4" />
-                      Oppna
+                      {t.common.open}
                     </Button>
                   </a>
                 </CardContent>

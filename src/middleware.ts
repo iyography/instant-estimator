@@ -1,7 +1,15 @@
 import { createServerClient } from '@supabase/ssr';
 import { NextResponse, type NextRequest } from 'next/server';
 
+// Demo mode - set to true for fully functional frontend demo
+const DEMO_MODE = true;
+
 export async function middleware(request: NextRequest) {
+  // Demo mode - bypass all auth, allow all routes
+  if (DEMO_MODE) {
+    return NextResponse.next();
+  }
+
   // Skip middleware if Supabase is not configured
   const supabaseUrl = process.env.NEXT_PUBLIC_SUPABASE_URL;
   const supabaseKey = process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY;

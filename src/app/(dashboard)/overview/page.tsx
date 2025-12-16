@@ -11,6 +11,7 @@ import { Badge } from '@/components/ui/badge';
 import { LeadValueBadge } from '@/components/crm/lead-value-badge';
 import { formatCurrency, formatDate, getStatusColor } from '@/lib/utils';
 import { calculateLeadValue } from '@/lib/lead-scoring';
+import { DEMO_MODE, DEMO_LEADS, getDemoStats } from '@/lib/demo/data';
 import { Users, FileText, TrendingUp, DollarSign, Plus, ArrowRight, Copy, Check } from 'lucide-react';
 import type { Lead, LeadStatus, Currency } from '@/types/database';
 
@@ -39,6 +40,15 @@ export default function OverviewPage() {
   useEffect(() => {
     async function fetchDashboardData() {
       if (!company) return;
+
+      // Demo mode - use demo data
+      if (DEMO_MODE) {
+        const demoStats = getDemoStats();
+        setStats(demoStats);
+        setRecentLeads(DEMO_LEADS.slice(0, 5) as unknown as Lead[]);
+        setLoading(false);
+        return;
+      }
 
       try {
         // Fetch all leads for stats

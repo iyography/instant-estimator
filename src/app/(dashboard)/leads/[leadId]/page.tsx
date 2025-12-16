@@ -5,35 +5,22 @@ import { useParams, useRouter } from 'next/navigation';
 import Link from 'next/link';
 import { createClient } from '@/lib/supabase/client';
 import { useCompany } from '@/hooks/use-company';
+import { useDashboardLanguage } from '@/hooks/use-dashboard-language';
 import { Button } from '@/components/ui/button';
 import { Select } from '@/components/ui/select';
 import { Textarea } from '@/components/ui/textarea';
 import { Badge } from '@/components/ui/badge';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { formatCurrency, formatDate, getStatusColor } from '@/lib/utils';
+import { DEMO_MODE, DEMO_LEADS, DEMO_JOB_TYPES, DEMO_QUESTIONS, DEMO_ANSWERS } from '@/lib/demo/data';
 import { ArrowLeft, Mail, Phone, MapPin, Copy, ExternalLink, Save } from 'lucide-react';
 import type { LeadWithResponses, LeadStatus, JobType, Question, AnswerOption } from '@/types/database';
-
-const statusOptions = [
-  { value: 'new', label: 'Ny' },
-  { value: 'contacted', label: 'Kontaktad' },
-  { value: 'quoted', label: 'Offert' },
-  { value: 'won', label: 'Vunnen' },
-  { value: 'lost', label: 'Forlorad' },
-];
-
-const statusLabels: Record<LeadStatus, string> = {
-  new: 'Ny',
-  contacted: 'Kontaktad',
-  quoted: 'Offert',
-  won: 'Vunnen',
-  lost: 'Forlorad',
-};
 
 export default function LeadDetailPage() {
   const params = useParams();
   const router = useRouter();
   const { company } = useCompany();
+  const { t, language } = useDashboardLanguage();
   const leadId = params.leadId as string;
 
   const [lead, setLead] = useState<LeadWithResponses | null>(null);
@@ -47,9 +34,39 @@ export default function LeadDetailPage() {
 
   const supabase = createClient();
 
+  const statusOptions = [
+    { value: 'new', label: t.status.new },
+    { value: 'contacted', label: t.status.contacted },
+    { value: 'quoted', label: t.status.quoted },
+    { value: 'won', label: t.status.won },
+    { value: 'lost', label: t.status.lost },
+  ];
+
   useEffect(() => {
     async function fetchData() {
       if (!company) return;
+
+      // Demo mode - use demo data
+      if (DEMO_MODE) {
+        const demoLead = DEMO_LEADS.find(l => l.id === leadId);
+        if (demoLead) {
+          setLead(demoLead as unknown as LeadWithResponses);
+          setNotes(demoLead.notes || '');
+          setStatus(demoLead.status);
+
+          const demoJobType = DEMO_JOB_TYPES.find(jt => jt.id === demoLead.job_type_id);
+          if (demoJobType) {
+            setJobType(demoJobType as unknown as JobType);
+            const demoQuestions = DEMO_QUESTIONS.filter(q => q.job_type_id === demoJobType.id);
+            setQuestions(demoQuestions as unknown as Question[]);
+            const questionIds = demoQuestions.map(q => q.id);
+            const demoAnswers = DEMO_ANSWERS.filter(a => questionIds.includes(a.question_id));
+            setAnswerOptions(demoAnswers as unknown as AnswerOption[]);
+          }
+        }
+        setLoading(false);
+        return;
+      }
 
       try {
         // Fetch lead with responses
@@ -112,6 +129,15 @@ export default function LeadDetailPage() {
 
   const handleSave = async () => {
     setSaving(true);
+
+    // Demo mode - just update local state
+    if (DEMO_MODE) {
+      await new Promise(resolve => setTimeout(resolve, 500));
+      setLead((prev) => prev ? { ...prev, status, notes } : null);
+      setSaving(false);
+      return;
+    }
+
     try {
       const { error } = await supabase
         .from('leads')
@@ -128,7 +154,7 @@ export default function LeadDetailPage() {
       );
     } catch (error) {
       console.error('Failed to save:', error);
-      alert('Kunde inte spara. Forsok igen.');
+      alert(t.settings.messages.error);
     } finally {
       setSaving(false);
     }
@@ -158,10 +184,10 @@ export default function LeadDetailPage() {
   if (!lead) {
     return (
       <div className="text-center py-12">
-        <p className="text-slate-600">Lead hittades inte</p>
+        <p className="text-slate-600">{t.common.noResults}</p>
         <Link href="/leads">
           <Button variant="outline" className="mt-4">
-            Tillbaka till leads
+            {t.common.back}
           </Button>
         </Link>
       </div>
@@ -181,12 +207,12 @@ export default function LeadDetailPage() {
             <h1 className="text-2xl font-bold text-slate-900">
               {lead.customer_name}
             </h1>
-            <p className="text-slate-600">{jobType?.name || 'Okand jobbtyp'}</p>
+            <p className="text-slate-600">{jobType?.name || t.leads.table.jobType}</p>
           </div>
         </div>
         <Button onClick={handleSave} isLoading={saving}>
           <Save className="mr-2 h-4 w-4" />
-          Spara
+          {t.common.save}
         </Button>
       </div>
 
@@ -194,7 +220,7 @@ export default function LeadDetailPage() {
         {/* Contact Info */}
         <Card>
           <CardHeader>
-            <CardTitle>Kontaktinformation</CardTitle>
+            <CardTitle>{t.leadDetail.contactInfo}</CardTitle>
           </CardHeader>
           <CardContent className="space-y-4">
             <div className="flex items-center justify-between">
@@ -258,12 +284,12 @@ export default function LeadDetailPage() {
         {/* Status & Estimate */}
         <Card>
           <CardHeader>
-            <CardTitle>Status & Uppskattning</CardTitle>
+            <CardTitle>{t.leadDetail.statusEstimate}</CardTitle>
           </CardHeader>
           <CardContent className="space-y-4">
             <div>
               <label className="mb-2 block text-sm font-medium text-slate-600">
-                Status
+                {t.leads.table.status}
               </label>
               <Select
                 value={status}
@@ -273,25 +299,25 @@ export default function LeadDetailPage() {
             </div>
             <div>
               <label className="mb-2 block text-sm font-medium text-slate-600">
-                Prisuppskattning
+                {t.leadDetail.priceEstimate}
               </label>
               <p className="text-2xl font-bold text-slate-900">
                 {formatCurrency(
                   lead.estimated_price_low,
-                  company?.default_currency || 'SEK',
-                  company?.default_language || 'sv'
+                  company?.default_currency || 'USD',
+                  language
                 )}
                 {' - '}
                 {formatCurrency(
                   lead.estimated_price_high,
-                  company?.default_currency || 'SEK',
-                  company?.default_language || 'sv'
+                  company?.default_currency || 'USD',
+                  language
                 )}
               </p>
             </div>
             <div className="flex items-center gap-4 text-sm text-slate-500">
               <span>
-                Skapad: {formatDate(lead.created_at, company?.default_language || 'sv')}
+                {t.leadDetail.created}: {formatDate(lead.created_at, language)}
               </span>
               {lead.source_url && (
                 <a
@@ -300,7 +326,7 @@ export default function LeadDetailPage() {
                   rel="noopener noreferrer"
                   className="flex items-center gap-1 text-blue-600 hover:underline"
                 >
-                  Kalla
+                  {t.leadDetail.source}
                   <ExternalLink className="h-3 w-3" />
                 </a>
               )}
@@ -313,7 +339,7 @@ export default function LeadDetailPage() {
       {lead.lead_responses && lead.lead_responses.length > 0 && (
         <Card>
           <CardHeader>
-            <CardTitle>Svar</CardTitle>
+            <CardTitle>{t.leadDetail.responses}</CardTitle>
           </CardHeader>
           <CardContent>
             <div className="space-y-4">
@@ -346,13 +372,13 @@ export default function LeadDetailPage() {
       {/* Notes */}
       <Card>
         <CardHeader>
-          <CardTitle>Anteckningar</CardTitle>
+          <CardTitle>{t.leadDetail.notes}</CardTitle>
         </CardHeader>
         <CardContent>
           <Textarea
             value={notes}
             onChange={(e) => setNotes(e.target.value)}
-            placeholder="Lagg till anteckningar om denna lead..."
+            placeholder={t.leadDetail.notesPlaceholder}
             rows={4}
           />
         </CardContent>

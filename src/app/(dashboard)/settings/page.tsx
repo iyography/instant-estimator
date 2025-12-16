@@ -11,6 +11,7 @@ import { Select } from '@/components/ui/select';
 import { Textarea } from '@/components/ui/textarea';
 import { Card, CardContent, CardHeader, CardTitle, CardDescription } from '@/components/ui/card';
 import { BillingCard } from '@/components/billing/billing-card';
+import { DEMO_MODE } from '@/lib/demo/data';
 import { Save, Copy, ExternalLink } from 'lucide-react';
 import type { Industry, Currency, Language } from '@/types/database';
 
@@ -83,6 +84,14 @@ export default function SettingsPage() {
 
     setSaving(true);
     setMessage(null);
+
+    // Demo mode - just show success message
+    if (DEMO_MODE) {
+      await new Promise(resolve => setTimeout(resolve, 500)); // Simulate save
+      setMessage({ type: 'success', text: t.settings.messages.saved });
+      setSaving(false);
+      return;
+    }
 
     try {
       const { error } = await supabase

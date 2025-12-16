@@ -13,6 +13,7 @@ import { KanbanBoard } from '@/components/crm/kanban-board';
 import { LeadValueBadge } from '@/components/crm/lead-value-badge';
 import { formatCurrency, formatDate, getStatusColor } from '@/lib/utils';
 import { calculateLeadValue } from '@/lib/lead-scoring';
+import { DEMO_MODE, DEMO_LEADS, DEMO_JOB_TYPES } from '@/lib/demo/data';
 import { Search, Download, LayoutGrid, List } from 'lucide-react';
 import type { Lead, LeadStatus, JobType, Currency } from '@/types/database';
 
@@ -43,6 +44,14 @@ export default function LeadsPage() {
     async function fetchData() {
       if (!company) return;
 
+      // Demo mode - use demo data
+      if (DEMO_MODE) {
+        setLeads(DEMO_LEADS as unknown as Lead[]);
+        setJobTypes(DEMO_JOB_TYPES as unknown as JobType[]);
+        setLoading(false);
+        return;
+      }
+
       try {
         const [leadsRes, jobTypesRes] = await Promise.all([
           supabase
@@ -66,6 +75,9 @@ export default function LeadsPage() {
     }
 
     fetchData();
+
+    // Skip real-time subscription in demo mode
+    if (DEMO_MODE) return;
 
     // Set up real-time subscription
     const channel = supabase
@@ -100,10 +112,13 @@ export default function LeadsPage() {
   }, [company, supabase]);
 
   const handleStatusChange = async (leadId: string, newStatus: LeadStatus) => {
-    // Optimistic update
+    // Update local state
     setLeads((prev) =>
       prev.map((l) => (l.id === leadId ? { ...l, status: newStatus } : l))
     );
+
+    // Demo mode - just update local state
+    if (DEMO_MODE) return;
 
     const { error } = await supabase
       .from('leads')
