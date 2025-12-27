@@ -15,14 +15,17 @@ export type Language = 'sv' | 'en';
 
 export type SubscriptionStatus = 'trial' | 'active' | 'past_due' | 'canceled' | 'inactive';
 
-export type QuestionType = 'multiple_choice' | 'single_choice' | 'number_input' | 'text_input';
+export type QuestionType = 'multiple_choice' | 'single_choice' | 'number_input' | 'text_input' | 'quantity';
 
 export type PriceModifierType =
   | 'fixed_add'
   | 'fixed_subtract'
   | 'percentage_add'
   | 'percentage_subtract'
-  | 'multiply';
+  | 'multiply'
+  | 'fixed'
+  | 'percentage'
+  | 'per_unit';
 
 export type LeadStatus = 'new' | 'contacted' | 'quoted' | 'won' | 'lost';
 
@@ -60,6 +63,11 @@ export interface JobType {
   description: string | null;
   description_sv: string | null;
   base_price: number; // stored in smallest currency unit
+  min_price?: number; // minimum price floor
+  max_price?: number; // maximum price ceiling
+  estimated_hours?: number; // estimated labor hours
+  icon?: string; // lucide icon name
+  category?: 'major' | 'standard' | 'specialty';
   is_active: boolean;
   display_order: number;
   created_at: string;

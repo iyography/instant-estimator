@@ -2,23 +2,84 @@
 
 import { useEffect, useState } from 'react';
 import Link from 'next/link';
+import { useRouter } from 'next/navigation';
 import { useCompany } from '@/hooks/use-company';
 import { useDashboardLanguage } from '@/hooks/use-dashboard-language';
-import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
+import { Card, CardContent, CardHeader, CardTitle, CardDescription } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { Badge } from '@/components/ui/badge';
 import { formatCurrency } from '@/lib/utils';
 import { DEMO_JOB_TYPES, DEMO_FORMS } from '@/lib/demo/data';
-import { Plus, FileText, MoreVertical, Copy, ExternalLink, Pencil, Trash2 } from 'lucide-react';
+import { SERVICE_TEMPLATES, getTemplatesByIndustry, type ServiceTemplate } from '@/lib/service-templates';
+import { Plus, FileText, MoreVertical, Copy, ExternalLink, Pencil, Trash2, X, Zap, Flame, Droplets, Snowflake, Home, Wrench, PaintBucket, TreeDeciduous, Sparkles, LayoutTemplate, FileEdit } from 'lucide-react';
 import type { JobType, EstimatorForm } from '@/types/database';
+
+// Icon mapping for templates
+const iconMap: Record<string, React.ElementType> = {
+  zap: Zap,
+  plug: Zap,
+  flame: Flame,
+  droplets: Droplets,
+  snowflake: Snowflake,
+  home: Home,
+  wrench: Wrench,
+  paintbrush: PaintBucket,
+  'tree-deciduous': TreeDeciduous,
+  sparkles: Sparkles,
+};
 
 export default function FormsPage() {
   const { company } = useCompany();
+  const router = useRouter();
   const { t, language } = useDashboardLanguage();
   const [jobTypes, setJobTypes] = useState<JobType[]>([]);
   const [forms, setForms] = useState<EstimatorForm[]>([]);
   const [loading, setLoading] = useState(true);
   const [activeMenu, setActiveMenu] = useState<string | null>(null);
+  const [showTemplateModal, setShowTemplateModal] = useState(false);
+  const [selectedIndustry, setSelectedIndustry] = useState<string>('all');
+
+  // Get templates filtered by industry
+  const filteredTemplates = selectedIndustry === 'all'
+    ? SERVICE_TEMPLATES
+    : getTemplatesByIndustry(selectedIndustry);
+
+  const industries = [
+    { value: 'all', label: 'All Industries' },
+    { value: 'electrician', label: 'Electrical' },
+    { value: 'plumber', label: 'Plumbing' },
+    { value: 'hvac', label: 'HVAC' },
+    { value: 'roofing', label: 'Roofing' },
+    { value: 'painter', label: 'Painting' },
+    { value: 'landscaper', label: 'Landscaping' },
+    { value: 'cleaning', label: 'Cleaning' },
+  ];
+
+  const handleSelectTemplate = (template: ServiceTemplate) => {
+    // In a real app, this would create a new service with the template data
+    // For now, we'll add it to local state and navigate to edit
+    const newJobType: JobType = {
+      id: `template-${Date.now()}`,
+      company_id: company?.id || '',
+      name: template.name,
+      name_sv: null,
+      description: template.description,
+      description_sv: null,
+      base_price: template.basePrice,
+      is_active: true,
+      display_order: jobTypes.length,
+      created_at: new Date().toISOString(),
+      updated_at: new Date().toISOString(),
+    };
+    setJobTypes([...jobTypes, newJobType]);
+    setShowTemplateModal(false);
+    router.push(`/forms/${newJobType.id}`);
+  };
+
+  const handleCreateFromScratch = () => {
+    setShowTemplateModal(false);
+    router.push('/forms/new');
+  };
 
   useEffect(() => {
     if (!company) return;
@@ -58,12 +119,10 @@ export default function FormsPage() {
             <h1 className="text-2xl font-bold text-slate-900">{t.forms.title}</h1>
             <p className="text-slate-600">{t.forms.subtitle}</p>
           </div>
-          <Link href="/forms/new">
-            <Button>
-              <Plus className="mr-2 h-4 w-4" />
-              {t.forms.newJobType}
-            </Button>
-          </Link>
+          <Button onClick={() => setShowTemplateModal(true)}>
+            <Plus className="mr-2 h-4 w-4" />
+            New Service
+          </Button>
         </div>
 
         {jobTypes.length === 0 ? (
@@ -76,12 +135,10 @@ export default function FormsPage() {
               <p className="mt-1 text-slate-600">
                 {t.forms.createFirstJobType}
               </p>
-              <Link href="/forms/new" className="mt-4">
-                <Button>
-                  <Plus className="mr-2 h-4 w-4" />
-                  {t.forms.createJobType}
-                </Button>
-              </Link>
+              <Button className="mt-4" onClick={() => setShowTemplateModal(true)}>
+                <Plus className="mr-2 h-4 w-4" />
+                Create Service
+              </Button>
             </CardContent>
           </Card>
         ) : (
@@ -243,6 +300,105 @@ export default function FormsPage() {
           </div>
         )}
       </div>
+
+      {/* Template Selection Modal */}
+      {showTemplateModal && (
+        <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/50 backdrop-blur-sm">
+          <div className="bg-white rounded-2xl shadow-2xl w-full max-w-4xl max-h-[90vh] overflow-hidden mx-4">
+            {/* Modal Header */}
+            <div className="flex items-center justify-between p-6 border-b border-slate-200">
+              <div>
+                <h2 className="text-xl font-bold text-slate-900">Create New Service</h2>
+                <p className="text-slate-600 mt-1">Choose a template to get started quickly, or create from scratch</p>
+              </div>
+              <button
+                onClick={() => setShowTemplateModal(false)}
+                className="p-2 hover:bg-slate-100 rounded-lg transition-colors"
+              >
+                <X className="h-5 w-5 text-slate-500" />
+              </button>
+            </div>
+
+            {/* Industry Filter */}
+            <div className="px-6 py-4 border-b border-slate-100 bg-slate-50">
+              <div className="flex flex-wrap gap-2">
+                {industries.map((industry) => (
+                  <button
+                    key={industry.value}
+                    onClick={() => setSelectedIndustry(industry.value)}
+                    className={`px-3 py-1.5 rounded-full text-sm font-medium transition-colors ${
+                      selectedIndustry === industry.value
+                        ? 'bg-slate-900 text-white'
+                        : 'bg-white text-slate-600 hover:bg-slate-100 border border-slate-200'
+                    }`}
+                  >
+                    {industry.label}
+                  </button>
+                ))}
+              </div>
+            </div>
+
+            {/* Templates Grid */}
+            <div className="p-6 overflow-y-auto max-h-[50vh]">
+              <div className="grid gap-4 sm:grid-cols-2 lg:grid-cols-3">
+                {/* Create from Scratch Option */}
+                <button
+                  onClick={handleCreateFromScratch}
+                  className="group p-5 rounded-xl border-2 border-dashed border-slate-300 hover:border-blue-500 hover:bg-blue-50/50 transition-all text-left"
+                >
+                  <div className="w-12 h-12 rounded-xl bg-slate-100 group-hover:bg-blue-100 flex items-center justify-center mb-4 transition-colors">
+                    <FileEdit className="h-6 w-6 text-slate-500 group-hover:text-blue-600" />
+                  </div>
+                  <h3 className="font-semibold text-slate-900 mb-1">Create from Scratch</h3>
+                  <p className="text-sm text-slate-500">Start with a blank service and add your own questions</p>
+                </button>
+
+                {/* Template Cards */}
+                {filteredTemplates.map((template) => {
+                  const Icon = iconMap[template.icon] || Zap;
+                  const categoryColors = {
+                    major: 'from-red-500 to-orange-500',
+                    standard: 'from-blue-500 to-cyan-500',
+                    specialty: 'from-purple-500 to-pink-500',
+                  };
+                  return (
+                    <button
+                      key={template.id}
+                      onClick={() => handleSelectTemplate(template)}
+                      className="group p-5 rounded-xl border border-slate-200 hover:border-blue-500 hover:shadow-lg transition-all text-left bg-white"
+                    >
+                      <div className={`w-12 h-12 rounded-xl bg-gradient-to-br ${categoryColors[template.category]} flex items-center justify-center mb-4`}>
+                        <Icon className="h-6 w-6 text-white" />
+                      </div>
+                      <h3 className="font-semibold text-slate-900 mb-1">{template.name}</h3>
+                      <p className="text-sm text-slate-500 mb-3 line-clamp-2">{template.description}</p>
+                      <div className="flex items-center justify-between">
+                        <span className="text-sm font-medium text-slate-900">
+                          From ${(template.basePrice / 100).toLocaleString()}
+                        </span>
+                        <Badge variant="secondary" className="text-xs">
+                          {template.questions.length} questions
+                        </Badge>
+                      </div>
+                    </button>
+                  );
+                })}
+              </div>
+            </div>
+
+            {/* Modal Footer */}
+            <div className="px-6 py-4 border-t border-slate-200 bg-slate-50 flex justify-between items-center">
+              <p className="text-sm text-slate-500">
+                <LayoutTemplate className="h-4 w-4 inline mr-1" />
+                {filteredTemplates.length} templates available
+              </p>
+              <Button variant="ghost" onClick={() => setShowTemplateModal(false)}>
+                Cancel
+              </Button>
+            </div>
+          </div>
+        </div>
+      )}
     </div>
   );
 }

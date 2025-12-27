@@ -16,7 +16,8 @@ export interface PriceModifier {
 export function applyModifier(
   currentPrice: number,
   modifierType: PriceModifierType,
-  modifierValue: number
+  modifierValue: number,
+  quantity: number = 1
 ): number {
   switch (modifierType) {
     case 'fixed_add':
@@ -29,6 +30,15 @@ export function applyModifier(
       return currentPrice * (1 - modifierValue / 100);
     case 'multiply':
       return currentPrice * modifierValue;
+    case 'fixed':
+      // Generic fixed modifier (can be positive or negative based on value)
+      return currentPrice + modifierValue;
+    case 'percentage':
+      // Generic percentage modifier (can be positive or negative based on value)
+      return currentPrice * (1 + modifierValue / 100);
+    case 'per_unit':
+      // Per unit pricing (value is already in cents, multiply by quantity)
+      return currentPrice + (modifierValue * quantity);
     default:
       return currentPrice;
   }
@@ -114,6 +124,9 @@ export function getModifierDescription(
       percentage_add: `+${value}%`,
       percentage_subtract: `-${value}%`,
       multiply: `×${value}`,
+      fixed: value >= 0 ? `+${value / 100} kr` : `${value / 100} kr`,
+      percentage: value >= 0 ? `+${value}%` : `${value}%`,
+      per_unit: `${value / 100} kr/st`,
     },
     en: {
       fixed_add: `+${value}`,
@@ -121,6 +134,9 @@ export function getModifierDescription(
       percentage_add: `+${value}%`,
       percentage_subtract: `-${value}%`,
       multiply: `×${value}`,
+      fixed: value >= 0 ? `+$${value / 100}` : `-$${Math.abs(value) / 100}`,
+      percentage: value >= 0 ? `+${value}%` : `${value}%`,
+      per_unit: `$${value / 100}/unit`,
     },
   };
 

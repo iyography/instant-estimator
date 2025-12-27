@@ -226,14 +226,71 @@ function MeshGradientBackground() {
   );
 }
 
+// Animated Lightning Bolt with Spark Effect
+function SparkZapIcon() {
+  return (
+    <div className="relative h-7 w-7">
+      {/* Main lightning bolt */}
+      <Zap className="h-7 w-7 text-amber-500 animate-pulse-glow" />
+      {/* Spark particles */}
+      <div className="absolute -top-1 -right-1 h-2 w-2 rounded-full bg-yellow-400 animate-spark" />
+      <div className="absolute top-0 -left-1 h-1.5 w-1.5 rounded-full bg-amber-300 animate-spark animation-delay-500" />
+      <div className="absolute -bottom-1 right-0 h-1 w-1 rounded-full bg-orange-400 animate-spark animation-delay-1000" />
+      <div className="absolute top-1/2 -right-2 h-1.5 w-1.5 rounded-full bg-yellow-300 animate-spark animation-delay-1500" />
+    </div>
+  );
+}
+
+// Animated Users Icon
+function AnimatedUsersIcon() {
+  return (
+    <div className="relative h-7 w-7">
+      <Users className="h-7 w-7 text-emerald-500" />
+      {/* Pulse rings */}
+      <div className="absolute inset-0 flex items-center justify-center">
+        <div className="h-10 w-10 rounded-full border-2 border-emerald-400/50 animate-ping-slow" />
+      </div>
+      <div className="absolute inset-0 flex items-center justify-center">
+        <div className="h-12 w-12 rounded-full border border-emerald-300/30 animate-ping-slower" />
+      </div>
+    </div>
+  );
+}
+
+// Animated Moving Chart Icon
+function MovingChartIcon() {
+  return (
+    <div className="relative h-7 w-7 flex items-end justify-center gap-0.5">
+      {/* Animated bars */}
+      <div className="w-1.5 bg-purple-500 rounded-t animate-chart-bar-1" style={{ height: '60%' }} />
+      <div className="w-1.5 bg-purple-400 rounded-t animate-chart-bar-2" style={{ height: '80%' }} />
+      <div className="w-1.5 bg-purple-600 rounded-t animate-chart-bar-3" style={{ height: '45%' }} />
+      <div className="w-1.5 bg-purple-500 rounded-t animate-chart-bar-4" style={{ height: '90%' }} />
+      <div className="w-1.5 bg-purple-400 rounded-t animate-chart-bar-5" style={{ height: '70%' }} />
+    </div>
+  );
+}
+
+// Animated Code Icon
+function AnimatedCodeIcon() {
+  return (
+    <div className="relative h-7 w-7">
+      <Code className="h-7 w-7 text-orange-500 animate-code-pulse" />
+      {/* Floating code symbols */}
+      <span className="absolute -top-1 -right-1 text-[8px] font-mono text-orange-400 animate-float-code">&lt;/&gt;</span>
+      <span className="absolute -bottom-1 -left-1 text-[8px] font-mono text-amber-400 animate-float-code animation-delay-1000">{'{}'}</span>
+    </div>
+  );
+}
+
 function FeatureCard({
-  icon: Icon,
+  icon,
   title,
   description,
   gradient,
   delay
 }: {
-  icon: React.ElementType;
+  icon: React.ReactNode;
   title: string;
   description: string;
   gradient: string;
@@ -261,7 +318,7 @@ function FeatureCard({
           'flex h-14 w-14 items-center justify-center rounded-xl transition-transform duration-300 group-hover:scale-110',
           gradient.replace('bg-gradient-to-br', 'bg-gradient-to-br').replace('/5', '/20')
         )}>
-          <Icon className="h-7 w-7 text-slate-700" />
+          {icon}
         </div>
         <h3 className="mt-6 text-xl font-semibold text-slate-900">
           {title}
@@ -346,15 +403,82 @@ export default function HomePage() {
         .animate-fade-in-up {
           animation: fadeInUp 0.8s ease-out forwards;
         }
+        /* Spark animation for lightning bolt */
+        @keyframes spark {
+          0%, 100% { opacity: 0; transform: scale(0); }
+          50% { opacity: 1; transform: scale(1); }
+        }
+        @keyframes pulse-glow {
+          0%, 100% { filter: drop-shadow(0 0 2px rgba(251, 191, 36, 0.5)); }
+          50% { filter: drop-shadow(0 0 8px rgba(251, 191, 36, 0.8)); transform: scale(1.05); }
+        }
+        .animate-spark {
+          animation: spark 1.5s ease-in-out infinite;
+        }
+        .animate-pulse-glow {
+          animation: pulse-glow 2s ease-in-out infinite;
+        }
+        /* Ping animations for users icon */
+        @keyframes ping-slow {
+          0% { transform: scale(1); opacity: 0.5; }
+          100% { transform: scale(1.5); opacity: 0; }
+        }
+        @keyframes ping-slower {
+          0% { transform: scale(1); opacity: 0.3; }
+          100% { transform: scale(1.8); opacity: 0; }
+        }
+        .animate-ping-slow {
+          animation: ping-slow 2s cubic-bezier(0, 0, 0.2, 1) infinite;
+        }
+        .animate-ping-slower {
+          animation: ping-slower 2.5s cubic-bezier(0, 0, 0.2, 1) infinite;
+          animation-delay: 0.5s;
+        }
+        /* Chart bar animations */
+        @keyframes chart-bar-1 {
+          0%, 100% { height: 60%; }
+          50% { height: 90%; }
+        }
+        @keyframes chart-bar-2 {
+          0%, 100% { height: 80%; }
+          50% { height: 50%; }
+        }
+        @keyframes chart-bar-3 {
+          0%, 100% { height: 45%; }
+          50% { height: 75%; }
+        }
+        @keyframes chart-bar-4 {
+          0%, 100% { height: 90%; }
+          50% { height: 60%; }
+        }
+        @keyframes chart-bar-5 {
+          0%, 100% { height: 70%; }
+          50% { height: 95%; }
+        }
+        .animate-chart-bar-1 { animation: chart-bar-1 2s ease-in-out infinite; }
+        .animate-chart-bar-2 { animation: chart-bar-2 2.2s ease-in-out infinite; }
+        .animate-chart-bar-3 { animation: chart-bar-3 1.8s ease-in-out infinite; }
+        .animate-chart-bar-4 { animation: chart-bar-4 2.5s ease-in-out infinite; }
+        .animate-chart-bar-5 { animation: chart-bar-5 2.1s ease-in-out infinite; }
+        /* Code animation */
+        @keyframes code-pulse {
+          0%, 100% { opacity: 1; }
+          50% { opacity: 0.7; transform: scale(0.98); }
+        }
+        @keyframes float-code {
+          0%, 100% { transform: translateY(0) rotate(0deg); opacity: 0.7; }
+          50% { transform: translateY(-3px) rotate(5deg); opacity: 1; }
+        }
+        .animate-code-pulse {
+          animation: code-pulse 3s ease-in-out infinite;
+        }
+        .animate-float-code {
+          animation: float-code 2s ease-in-out infinite;
+        }
       `}</style>
 
       {/* Header */}
-      <header className={cn(
-        'fixed top-0 left-0 right-0 z-50 transition-all duration-300',
-        scrollY > 50
-          ? 'bg-white/80 backdrop-blur-xl border-b border-slate-200/50 shadow-sm'
-          : 'bg-transparent'
-      )}>
+      <header className="fixed top-0 left-0 right-0 z-50 bg-white shadow-md">
         <div className="mx-auto flex h-20 max-w-7xl items-center justify-between px-6 lg:px-8">
           <Link href="/" className="flex items-center gap-2">
             <div className="flex h-10 w-10 items-center justify-center rounded-xl bg-gradient-to-br from-blue-600 to-purple-600">
@@ -378,7 +502,7 @@ export default function HomePage() {
           <div className="flex items-center gap-3">
             <LanguageSwitcher />
             <Link href="/login">
-              <Button variant="ghost" className="text-slate-600 hover:text-slate-900">
+              <Button className="bg-black hover:bg-slate-800 text-white">
                 {t.nav.signIn}
               </Button>
             </Link>
@@ -443,15 +567,16 @@ export default function HomePage() {
                 mounted ? 'opacity-100 translate-y-0' : 'opacity-0 translate-y-8'
               )}
             >
+              <Link href="/demo">
+                <Button size="lg" className="h-14 px-8 text-base bg-gradient-to-r from-emerald-500 to-teal-500 hover:from-emerald-600 hover:to-teal-600 text-white shadow-xl shadow-emerald-500/30 hover:shadow-emerald-500/50 transition-all duration-300 hover:scale-105 group">
+                  <Sparkles className="mr-2 h-5 w-5 group-hover:animate-pulse" />
+                  Try Live Demo
+                </Button>
+              </Link>
               <Link href="/signup">
                 <Button size="lg" className="h-14 px-8 text-base bg-gradient-to-r from-blue-600 to-purple-600 hover:from-blue-700 hover:to-purple-700 text-white shadow-xl shadow-blue-500/30 hover:shadow-blue-500/50 transition-all duration-300 hover:scale-105">
                   {t.hero.cta1}
                   <ArrowRight className="ml-2 h-5 w-5" />
-                </Button>
-              </Link>
-              <Link href="#how-it-works">
-                <Button size="lg" variant="outline" className="h-14 px-8 text-base border-slate-300 hover:bg-slate-50 transition-all duration-300">
-                  {t.hero.cta2}
                 </Button>
               </Link>
             </div>
@@ -516,28 +641,28 @@ export default function HomePage() {
 
           <div className="mt-20 grid gap-8 md:grid-cols-2 lg:grid-cols-4">
             <FeatureCard
-              icon={Zap}
+              icon={<SparkZapIcon />}
               title={t.features.feature1Title}
               description={t.features.feature1Desc}
-              gradient="bg-gradient-to-br from-blue-500/5 to-cyan-500/5"
+              gradient="bg-gradient-to-br from-amber-500/5 to-yellow-500/5"
               delay={0}
             />
             <FeatureCard
-              icon={Users}
+              icon={<AnimatedUsersIcon />}
               title={t.features.feature2Title}
               description={t.features.feature2Desc}
               gradient="bg-gradient-to-br from-green-500/5 to-emerald-500/5"
               delay={100}
             />
             <FeatureCard
-              icon={BarChart3}
+              icon={<MovingChartIcon />}
               title={t.features.feature3Title}
               description={t.features.feature3Desc}
               gradient="bg-gradient-to-br from-purple-500/5 to-pink-500/5"
               delay={200}
             />
             <FeatureCard
-              icon={Code}
+              icon={<AnimatedCodeIcon />}
               title={t.features.feature4Title}
               description={t.features.feature4Desc}
               gradient="bg-gradient-to-br from-orange-500/5 to-amber-500/5"

@@ -394,8 +394,8 @@ export default function OnboardingPage() {
                     t.onboarding.jobType.creating
                   ) : (
                     <>
-                      <Sparkles className="mr-2 h-4 w-4" />
-                      {t.onboarding.jobType.createWithAI}
+                      {t.onboarding.next}
+                      <ArrowRight className="ml-2 h-4 w-4" />
                     </>
                   )}
                 </Button>
@@ -417,6 +417,29 @@ export default function OnboardingPage() {
               </CardDescription>
             </CardHeader>
             <CardContent className="space-y-6">
+              {/* Edit Form Button */}
+              <div className="p-4 rounded-lg bg-blue-50 border border-blue-200">
+                <div className="flex items-start gap-3">
+                  <div className="p-2 bg-blue-100 rounded-lg">
+                    <Sparkles className="h-5 w-5 text-blue-600" />
+                  </div>
+                  <div className="flex-1">
+                    <h4 className="font-medium text-slate-900">Customize Your Form</h4>
+                    <p className="text-sm text-slate-600 mt-1">
+                      Add your own questions, adjust pricing, and personalize the estimator for your business.
+                    </p>
+                    <Button
+                      variant="outline"
+                      className="mt-3"
+                      onClick={() => router.push('/forms')}
+                    >
+                      Edit Form
+                      <ArrowRight className="ml-2 h-4 w-4" />
+                    </Button>
+                  </div>
+                </div>
+              </div>
+
               <div>
                 <Label>{t.onboarding.done.publicLink}</Label>
                 <div className="mt-2 flex items-center gap-2">
