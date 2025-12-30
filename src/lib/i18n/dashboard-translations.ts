@@ -26,6 +26,8 @@ export const dashboardTranslations = {
     // Navigation
     nav: {
       overview: 'Overview',
+      services: 'Services',
+      estimators: 'Estimators',
       leads: 'Leads',
       forms: 'Forms',
       settings: 'Settings',
@@ -77,14 +79,14 @@ export const dashboardTranslations = {
       exportCSV: 'Export CSV',
       searchPlaceholder: 'Search by name or email...',
       allStatuses: 'All statuses',
-      allJobTypes: 'All job types',
+      allServices: 'All services',
       noLeadsFound: 'No leads found',
       table: {
         customer: 'Customer',
         email: 'Email',
         phone: 'Phone',
         address: 'Address',
-        jobType: 'Job Type',
+        service: 'Service',
         value: 'Value',
         estimate: 'Estimate',
         estimateLow: 'Estimate (Low)',
@@ -103,6 +105,7 @@ export const dashboardTranslations = {
       steps: {
         company: 'Company',
         settings: 'Settings',
+        services: 'Services',
         jobType: 'Job Type',
         done: 'Done',
       },
@@ -120,6 +123,14 @@ export const dashboardTranslations = {
         description: 'Choose default settings for your estimator',
         defaultLanguage: 'Default Language',
         defaultCurrency: 'Default Currency',
+      },
+      services: {
+        title: 'Services',
+        description: 'Select the services that you offer',
+        suggestedFor: 'Suggested services for {industry}',
+        selectMultiple: 'You can select multiple services',
+        selectedCount: '{count} service(s) selected',
+        setUpLater: 'Set up later',
       },
       jobType: {
         title: 'Create your first job type',
@@ -271,15 +282,15 @@ export const dashboardTranslations = {
 
     // Forms
     forms: {
-      title: 'Job Types',
-      subtitle: 'Manage your job types and questions',
+      title: 'Services',
+      subtitle: 'Manage your services and questions',
       createNew: 'Create new form',
       noForms: 'No forms yet',
       createFirst: 'Create your first estimator form',
-      newJobType: 'New job type',
-      noJobTypes: 'No job types yet',
-      createFirstJobType: 'Create your first job type to get started',
-      createJobType: 'Create job type',
+      newService: 'New service',
+      noServices: 'No services yet',
+      createFirstService: 'Create your first service to get started',
+      createService: 'Create service',
       basePrice: 'Base price',
       active: 'Active',
       inactive: 'Inactive',
@@ -336,6 +347,8 @@ export const dashboardTranslations = {
     // Navigation
     nav: {
       overview: 'Oversikt',
+      services: 'Tjanster',
+      estimators: 'Estimatorer',
       leads: 'Leads',
       forms: 'Formular',
       settings: 'Installningar',
@@ -387,14 +400,14 @@ export const dashboardTranslations = {
       exportCSV: 'Exportera CSV',
       searchPlaceholder: 'Sok pa namn eller e-post...',
       allStatuses: 'Alla statusar',
-      allJobTypes: 'Alla jobbtyper',
+      allServices: 'Alla tjanster',
       noLeadsFound: 'Inga leads hittades',
       table: {
         customer: 'Kund',
         email: 'E-post',
         phone: 'Telefon',
         address: 'Adress',
-        jobType: 'Jobbtyp',
+        service: 'Tjanst',
         value: 'Varde',
         estimate: 'Uppskattning',
         estimateLow: 'Uppskattning (lagt)',
@@ -413,6 +426,7 @@ export const dashboardTranslations = {
       steps: {
         company: 'Foretag',
         settings: 'Installningar',
+        services: 'Tjanster',
         jobType: 'Jobbtyp',
         done: 'Klart',
       },
@@ -430,6 +444,14 @@ export const dashboardTranslations = {
         description: 'Valj standardinstallningar for din estimator',
         defaultLanguage: 'Standardsprak',
         defaultCurrency: 'Standardvaluta',
+      },
+      services: {
+        title: 'Tjanster',
+        description: 'Valj de tjanster du erbjuder',
+        suggestedFor: 'Foreslagna tjanster for {industry}',
+        selectMultiple: 'Du kan valja flera tjanster',
+        selectedCount: '{count} tjanst(er) valda',
+        setUpLater: 'Stall in senare',
       },
       jobType: {
         title: 'Skapa din forsta jobbtyp',
@@ -581,15 +603,15 @@ export const dashboardTranslations = {
 
     // Forms
     forms: {
-      title: 'Jobbtyper',
-      subtitle: 'Hantera dina jobbtyper och fragor',
+      title: 'Tjanster',
+      subtitle: 'Hantera dina tjanster och fragor',
       createNew: 'Skapa nytt formular',
       noForms: 'Inga formular annu',
       createFirst: 'Skapa ditt forsta estimatorformular',
-      newJobType: 'Ny jobbtyp',
-      noJobTypes: 'Inga jobbtyper annu',
-      createFirstJobType: 'Skapa din forsta jobbtyp for att komma igang',
-      createJobType: 'Skapa jobbtyp',
+      newService: 'Ny tjanst',
+      noServices: 'Inga tjanster annu',
+      createFirstService: 'Skapa din forsta tjanst for att komma igang',
+      createService: 'Skapa tjanst',
       basePrice: 'Baspris',
       active: 'Aktiv',
       inactive: 'Inaktiv',
@@ -636,7 +658,7 @@ type TranslationsStructure = {
     exportCSV: string;
     searchPlaceholder: string;
     allStatuses: string;
-    allJobTypes: string;
+    allServices: string;
     noLeadsFound: string;
     table: { [key: string]: string };
   };
@@ -648,6 +670,7 @@ type TranslationsStructure = {
     steps: { [key: string]: string };
     companyInfo: { [key: string]: string };
     languageCurrency: { [key: string]: string };
+    services?: { [key: string]: string };
     jobType: { [key: string]: string };
     done: { [key: string]: string };
     errors: { [key: string]: string };
@@ -678,10 +701,10 @@ type TranslationsStructure = {
     createNew: string;
     noForms: string;
     createFirst: string;
-    newJobType: string;
-    noJobTypes: string;
-    createFirstJobType: string;
-    createJobType: string;
+    newService: string;
+    noServices: string;
+    createFirstService: string;
+    createService: string;
     basePrice: string;
     active: string;
     inactive: string;

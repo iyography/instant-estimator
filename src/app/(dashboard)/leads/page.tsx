@@ -264,7 +264,7 @@ export default function LeadsPage() {
   }, [leads, searchQuery, statusFilter, jobTypeFilter, dateFrom, dateTo, sortField, sortDirection]);
 
   const jobTypeOptions = [
-    { value: '', label: t.leads.allJobTypes },
+    { value: '', label: t.leads.allServices },
     ...jobTypes.map((jt) => ({ value: jt.id, label: jt.name })),
   ];
 

@@ -12,6 +12,7 @@ import {
   LogOut,
   Menu,
   X,
+  Wrench,
 } from 'lucide-react';
 import { useState } from 'react';
 import { createClient } from '@/lib/supabase/client';
@@ -31,7 +32,8 @@ export function Sidebar({ companyName }: SidebarProps) {
 
   const navigation = [
     { name: t.nav.overview, href: '/overview', icon: LayoutDashboard },
-    { name: t.nav.forms, href: '/forms', icon: FileText },
+    { name: t.nav.services || 'Services', href: '/services', icon: Wrench },
+    { name: t.nav.estimators || 'Estimators', href: '/forms', icon: FileText },
     { name: t.nav.leads, href: '/leads', icon: Users },
     { name: t.nav.settings, href: '/settings', icon: Settings },
   ];

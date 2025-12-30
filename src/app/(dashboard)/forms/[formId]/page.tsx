@@ -15,6 +15,23 @@ import { formatCurrency } from '@/lib/utils';
 import { previewEstimate } from '@/lib/pricing-engine';
 import { DEMO_JOB_TYPES, DEMO_QUESTIONS, DEMO_ANSWERS } from '@/lib/demo/data';
 import {
+  DndContext,
+  closestCenter,
+  KeyboardSensor,
+  PointerSensor,
+  useSensor,
+  useSensors,
+  type DragEndEvent,
+} from '@dnd-kit/core';
+import {
+  arrayMove,
+  SortableContext,
+  sortableKeyboardCoordinates,
+  useSortable,
+  verticalListSortingStrategy,
+} from '@dnd-kit/sortable';
+import { CSS } from '@dnd-kit/utilities';
+import {
   ArrowLeft,
   Plus,
   Sparkles,
@@ -50,12 +67,77 @@ interface ServicePackage {
   included_job_types: string[];
 }
 
+// Sortable Question Wrapper Component
+interface SortableQuestionProps {
+  question: QuestionWithOptions;
+  index: number;
+  onUpdate: (updated: QuestionWithOptions) => void;
+  onDelete: () => void;
+  onDuplicate: () => void;
+  currency: string;
+  allQuestions: QuestionWithOptions[];
+}
+
+function SortableQuestion({
+  question,
+  index,
+  onUpdate,
+  onDelete,
+  onDuplicate,
+  currency,
+  allQuestions,
+}: SortableQuestionProps) {
+  const {
+    attributes,
+    listeners,
+    setNodeRef,
+    transform,
+    transition,
+    isDragging,
+  } = useSortable({ id: question.id });
+
+  const style = {
+    transform: CSS.Transform.toString(transform),
+    transition,
+    opacity: isDragging ? 0.5 : 1,
+    zIndex: isDragging ? 1000 : 1,
+  };
+
+  return (
+    <div ref={setNodeRef} style={style} {...attributes}>
+      <QuestionEditor
+        question={question as any}
+        index={index}
+        onUpdate={(updated) => onUpdate(updated as any)}
+        onDelete={onDelete}
+        onDuplicate={onDuplicate}
+        currency={currency}
+        allQuestions={allQuestions as any}
+        allAnswers={allQuestions.flatMap(q => q.answer_options)}
+        dragHandleProps={listeners}
+      />
+    </div>
+  );
+}
+
 export default function FormBuilderPage() {
   const params = useParams();
   const router = useRouter();
   const { company } = useCompany();
   const formId = params.formId as string;
   const isNew = formId === 'new';
+
+  // DnD sensors
+  const sensors = useSensors(
+    useSensor(PointerSensor, {
+      activationConstraint: {
+        distance: 8,
+      },
+    }),
+    useSensor(KeyboardSensor, {
+      coordinateGetter: sortableKeyboardCoordinates,
+    })
+  );
 
   const [jobType, setJobType] = useState<Partial<JobType>>({
     name: '',
@@ -245,6 +327,24 @@ export default function FormBuilderPage() {
     });
 
     setQuestions(newQuestions);
+  };
+
+  const handleDragEnd = (event: DragEndEvent) => {
+    const { active, over } = event;
+
+    if (over && active.id !== over.id) {
+      const oldIndex = questions.findIndex((q) => q.id === active.id);
+      const newIndex = questions.findIndex((q) => q.id === over.id);
+
+      const newQuestions = arrayMove(questions, oldIndex, newIndex);
+
+      // Update display orders
+      newQuestions.forEach((q, i) => {
+        q.display_order = i;
+      });
+
+      setQuestions(newQuestions);
+    }
   };
 
   const addPackage = () => {
@@ -563,21 +663,31 @@ export default function FormBuilderPage() {
               </CardContent>
             </Card>
           ) : (
-            <div className="space-y-4">
-              {questions.map((question, index) => (
-                <QuestionEditor
-                  key={question.id}
-                  question={question as any}
-                  index={index}
-                  onUpdate={(updated) => updateQuestion(index, updated as any)}
-                  onDelete={() => deleteQuestion(index)}
-                  onDuplicate={() => duplicateQuestion(index)}
-                  currency={company?.default_currency || 'USD'}
-                  allQuestions={questions as any}
-                  allAnswers={questions.flatMap(q => q.answer_options)}
-                />
-              ))}
-            </div>
+            <DndContext
+              sensors={sensors}
+              collisionDetection={closestCenter}
+              onDragEnd={handleDragEnd}
+            >
+              <SortableContext
+                items={questions.map((q) => q.id)}
+                strategy={verticalListSortingStrategy}
+              >
+                <div className="space-y-4">
+                  {questions.map((question, index) => (
+                    <SortableQuestion
+                      key={question.id}
+                      question={question}
+                      index={index}
+                      onUpdate={(updated) => updateQuestion(index, updated)}
+                      onDelete={() => deleteQuestion(index)}
+                      onDuplicate={() => duplicateQuestion(index)}
+                      currency={company?.default_currency || 'USD'}
+                      allQuestions={questions}
+                    />
+                  ))}
+                </div>
+              </SortableContext>
+            </DndContext>
           )}
         </div>
       )}

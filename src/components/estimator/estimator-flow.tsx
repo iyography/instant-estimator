@@ -66,12 +66,13 @@ export function EstimatorFlow({
   const selectedJobType = jobTypes.find((jt) => jt.id === formState.jobTypeId);
   const questions = selectedJobType?.questions || [];
 
-  // Calculate total steps
+  // Calculate total steps: Job type selection (if multiple) + Questions + Contact Info
+  // Contact info now comes AFTER questions but BEFORE showing estimate
   const showJobTypeSelection = jobTypes.length > 1;
   const totalSteps =
     (showJobTypeSelection ? 1 : 0) + questions.length + 1; // +1 for contact info
 
-  // Determine current question based on step
+  // Determine current step type
   const currentQuestionIndex = showJobTypeSelection ? step - 1 : step;
   const currentQuestion =
     currentQuestionIndex >= 0 && currentQuestionIndex < questions.length
@@ -93,7 +94,7 @@ export function EstimatorFlow({
     return answers;
   };
 
-  // Calculate estimate when answers change
+  // Calculate estimate when answers change (but don't show it until after contact info)
   useEffect(() => {
     if (selectedJobType && Object.keys(formState.answers).length > 0) {
       const selectedAnswers = getSelectedAnswers();
@@ -189,7 +190,7 @@ export function EstimatorFlow({
       setSubmitted(true);
     } catch (error) {
       console.error('Failed to submit:', error);
-      alert('Kunde inte skicka. Forsok igen.');
+      alert('Could not submit. Please try again.');
     } finally {
       setSubmitting(false);
     }
@@ -213,7 +214,7 @@ export function EstimatorFlow({
 
   const primaryColor = styling?.primaryColor || '#0f172a';
 
-  // Success state
+  // Success state - NOW shows the estimate after submission
   if (submitted) {
     return (
       <Card className="mx-auto max-w-md">
@@ -224,14 +225,13 @@ export function EstimatorFlow({
           >
             <Check className="h-8 w-8 text-white" />
           </div>
-          <h2 className="text-2xl font-bold text-slate-900">Tack!</h2>
+          <h2 className="text-2xl font-bold text-slate-900">Thank you!</h2>
           <p className="mt-2 text-slate-600">
-            Vi har mottagit din forfragen. En entreprenor kommer att kontakta
-            dig inom kort.
+            We have received your request. A contractor will contact you shortly.
           </p>
           {estimate && (
             <div className="mt-6 rounded-lg bg-slate-100 p-4">
-              <p className="text-sm text-slate-600">Din prisuppskattning</p>
+              <p className="text-sm text-slate-600">Your price estimate</p>
               <p className="text-2xl font-bold" style={{ color: primaryColor }}>
                 {formatCurrency(
                   estimate.low,
@@ -254,20 +254,10 @@ export function EstimatorFlow({
 
   return (
     <div className="mx-auto max-w-md">
-      {/* Progress bar */}
+      {/* Progress bar - NO estimate shown during flow */}
       <div className="mb-6">
         <div className="flex justify-between text-sm text-slate-500">
-          <span>Steg {step + 1} av {totalSteps}</span>
-          {estimate && (
-            <span className="font-medium" style={{ color: primaryColor }}>
-              Uppskattning:{' '}
-              {formatCurrency(
-                (estimate.low + estimate.high) / 2,
-                company.default_currency,
-                company.default_language
-              )}
-            </span>
-          )}
+          <span>Step {step + 1} of {totalSteps}</span>
         </div>
         <div className="mt-2 h-2 rounded-full bg-slate-200">
           <div
@@ -285,7 +275,7 @@ export function EstimatorFlow({
         <Card>
           <CardContent className="py-6">
             <h2 className="mb-4 text-xl font-semibold text-slate-900">
-              Vilken tjanst behover du?
+              What service do you need?
             </h2>
             <div className="space-y-2">
               {jobTypes.map((jobType) => (
@@ -364,7 +354,7 @@ export function EstimatorFlow({
             {currentQuestion.question_type === 'number_input' && (
               <Input
                 type="number"
-                placeholder="Ange ett tal"
+                placeholder="Enter a number"
                 onChange={(e) => {
                   // Store number input as raw answer
                   setFormState((prev) => ({
@@ -380,7 +370,7 @@ export function EstimatorFlow({
             {currentQuestion.question_type === 'text_input' && (
               <Input
                 type="text"
-                placeholder="Skriv ditt svar"
+                placeholder="Enter your answer"
                 onChange={(e) => {
                   setFormState((prev) => ({
                     ...prev,
@@ -396,42 +386,20 @@ export function EstimatorFlow({
         </Card>
       )}
 
-      {/* Contact Info Step */}
+      {/* Contact Info Step - Required BEFORE seeing estimate */}
       {isContactStep && (
         <Card>
           <CardContent className="py-6">
-            {estimate && (
-              <div className="mb-6 rounded-lg bg-slate-100 p-4 text-center">
-                <p className="text-sm text-slate-600">Din prisuppskattning</p>
-                <p
-                  className="text-2xl font-bold"
-                  style={{ color: primaryColor }}
-                >
-                  {formatCurrency(
-                    estimate.low,
-                    company.default_currency,
-                    company.default_language
-                  )}
-                  {' - '}
-                  {formatCurrency(
-                    estimate.high,
-                    company.default_currency,
-                    company.default_language
-                  )}
-                </p>
-                <p className="mt-1 text-xs text-slate-500">
-                  Slutpriset kan variera beroende pa forhallandena pa plats.
-                </p>
-              </div>
-            )}
-
-            <h2 className="mb-4 text-xl font-semibold text-slate-900">
-              Din kontaktinformation
+            <h2 className="mb-2 text-xl font-semibold text-slate-900">
+              Where should we send your estimate?
             </h2>
+            <p className="mb-6 text-sm text-slate-500">
+              Enter your contact information to receive your personalized estimate.
+            </p>
             <div className="space-y-4">
               <div>
                 <Label htmlFor="name" required>
-                  Ditt namn
+                  Your name
                 </Label>
                 <Input
                   id="name"
@@ -445,12 +413,12 @@ export function EstimatorFlow({
                       },
                     }))
                   }
-                  placeholder="Anna Andersson"
+                  placeholder="John Smith"
                 />
               </div>
               <div>
                 <Label htmlFor="email" required>
-                  E-postadress
+                  Email address
                 </Label>
                 <Input
                   id="email"
@@ -465,11 +433,11 @@ export function EstimatorFlow({
                       },
                     }))
                   }
-                  placeholder="anna@example.com"
+                  placeholder="john@example.com"
                 />
               </div>
               <div>
-                <Label htmlFor="phone">Telefonnummer</Label>
+                <Label htmlFor="phone">Phone number</Label>
                 <Input
                   id="phone"
                   type="tel"
@@ -483,11 +451,11 @@ export function EstimatorFlow({
                       },
                     }))
                   }
-                  placeholder="070-123 45 67"
+                  placeholder="+1 555 123 4567"
                 />
               </div>
               <div>
-                <Label htmlFor="address">Adress (valfritt)</Label>
+                <Label htmlFor="address">Address (optional)</Label>
                 <Input
                   id="address"
                   value={formState.customerInfo.address}
@@ -500,7 +468,7 @@ export function EstimatorFlow({
                       },
                     }))
                   }
-                  placeholder="Storgatan 1, 123 45 Stockholm"
+                  placeholder="123 Main St, City, State 12345"
                 />
               </div>
             </div>
@@ -517,7 +485,7 @@ export function EstimatorFlow({
           className={step === 0 ? 'invisible' : ''}
         >
           <ArrowLeft className="mr-2 h-4 w-4" />
-          Tillbaka
+          Back
         </Button>
 
         {isContactStep ? (
@@ -529,10 +497,10 @@ export function EstimatorFlow({
             {submitting ? (
               <>
                 <Loader2 className="mr-2 h-4 w-4 animate-spin" />
-                Skickar...
+                Submitting...
               </>
             ) : (
-              'Fa min uppskattning'
+              'Get my estimate'
             )}
           </Button>
         ) : (
@@ -541,7 +509,7 @@ export function EstimatorFlow({
             disabled={!canProceed()}
             style={{ backgroundColor: primaryColor }}
           >
-            Nasta
+            Next
             <ArrowRight className="ml-2 h-4 w-4" />
           </Button>
         )}

@@ -47,6 +47,7 @@ interface QuestionEditorProps {
   currency: string;
   allQuestions?: ExtendedQuestion[];
   allAnswers?: AnswerOption[];
+  dragHandleProps?: Record<string, unknown>;
 }
 
 const questionTypeOptions = [
@@ -73,6 +74,7 @@ export function QuestionEditor({
   currency,
   allQuestions = [],
   allAnswers = [],
+  dragHandleProps,
 }: QuestionEditorProps) {
   const [isExpanded, setIsExpanded] = useState(true);
   const [showAdvanced, setShowAdvanced] = useState(false);
@@ -194,7 +196,12 @@ export function QuestionEditor({
     )}>
       <CardHeader className="flex flex-row items-center justify-between py-3">
         <div className="flex items-center gap-3">
-          <GripVertical className="h-5 w-5 cursor-grab text-slate-400 hover:text-slate-600" />
+          <div
+            {...dragHandleProps}
+            className="cursor-grab active:cursor-grabbing touch-none"
+          >
+            <GripVertical className="h-5 w-5 text-slate-400 hover:text-slate-600" />
+          </div>
           <span className="flex h-7 w-7 items-center justify-center rounded-lg bg-gradient-to-br from-blue-500 to-purple-500 text-sm font-medium text-white">
             {index + 1}
           </span>

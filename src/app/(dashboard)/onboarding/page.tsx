@@ -23,9 +23,7 @@ interface OnboardingState {
   website: string;
   currency: Currency;
   language: Language;
-  selectedJobType: string | null;
-  customJobType: string;
-  basePrice: number;
+  selectedServices: string[];
 }
 
 export default function OnboardingPage() {
@@ -64,15 +62,13 @@ export default function OnboardingPage() {
     website: '',
     currency: 'USD',
     language: 'en',
-    selectedJobType: null,
-    customJobType: '',
-    basePrice: 0,
+    selectedServices: [],
   });
   const [loading, setLoading] = useState(false);
-  const [aiLoading, setAiLoading] = useState(false);
   const [company, setCompany] = useState<Company | null>(null);
+  const [codeCopied, setCodeCopied] = useState(false);
 
-  const suggestedJobTypes = SUGGESTED_JOB_TYPES[state.industry]?.[state.language] || [];
+  const suggestedServices = SUGGESTED_JOB_TYPES[state.industry]?.[state.language] || [];
 
   const handleNext = () => {
     setState((prev) => ({ ...prev, step: prev.step + 1 }));
@@ -82,9 +78,27 @@ export default function OnboardingPage() {
     setState((prev) => ({ ...prev, step: prev.step - 1 }));
   };
 
+  const handleSetUpLater = async () => {
+    // Create company without services and go directly to dashboard
+    setLoading(true);
+    await new Promise(resolve => setTimeout(resolve, 1000));
+
+    const demoCompany = {
+      ...DEMO_COMPANY,
+      name: state.companyName || DEMO_COMPANY.name,
+      slug: generateSlug(state.companyName || DEMO_COMPANY.name),
+      industry: state.industry,
+      default_currency: state.currency,
+      default_language: state.language,
+    } as unknown as Company;
+
+    setCompany(demoCompany);
+    setLoading(false);
+    router.push('/overview');
+  };
+
   const handleCreateCompany = async () => {
     setLoading(true);
-    setAiLoading(true);
 
     // Simulate company creation
     await new Promise(resolve => setTimeout(resolve, 1500));
@@ -100,7 +114,6 @@ export default function OnboardingPage() {
 
     setCompany(demoCompany);
     setLoading(false);
-    setAiLoading(false);
     handleNext();
   };
 
@@ -112,17 +125,28 @@ export default function OnboardingPage() {
     if (company) {
       const code = `<script src="${window.location.origin}/api/widget/${company.slug}"></script>`;
       navigator.clipboard.writeText(code);
+      setCodeCopied(true);
+      setTimeout(() => setCodeCopied(false), 2000);
     }
+  };
+
+  const toggleServiceSelection = (service: string) => {
+    setState((prev) => ({
+      ...prev,
+      selectedServices: prev.selectedServices.includes(service)
+        ? prev.selectedServices.filter(s => s !== service)
+        : [...prev.selectedServices, service],
+    }));
   };
 
   const canProceedStep1 = state.companyName.trim() !== '' && state.industry;
   const canProceedStep2 = true; // Language and currency have defaults
-  const canProceedStep3 = state.selectedJobType || state.customJobType.trim() !== '';
+  const canProceedStep3 = state.selectedServices.length > 0;
 
   const progressSteps = [
     t.onboarding.steps.company,
     t.onboarding.steps.settings,
-    t.onboarding.steps.jobType,
+    t.onboarding.steps.services || 'Services',
     t.onboarding.steps.done,
   ];
 
@@ -299,85 +323,49 @@ export default function OnboardingPage() {
           </Card>
         )}
 
-        {/* Step 3: Job Type */}
+        {/* Step 3: Services (multi-select) */}
         {state.step === 3 && (
           <Card>
             <CardHeader>
-              <CardTitle>{t.onboarding.jobType.title}</CardTitle>
+              <CardTitle>{t.onboarding.services?.title || 'Services'}</CardTitle>
               <CardDescription>
-                {t.onboarding.jobType.description}
+                {t.onboarding.services?.description || 'Select the services that you offer'}
               </CardDescription>
             </CardHeader>
             <CardContent className="space-y-4">
               <div>
-                <Label>{t.onboarding.jobType.suggestedFor.replace('{industry}', industryOptions.find(i => i.value === state.industry)?.label || '')}</Label>
-                <div className="mt-2 space-y-2">
-                  {suggestedJobTypes.slice(0, 5).map((jobType) => (
+                <Label>
+                  {(t.onboarding.services?.suggestedFor || 'Suggested services for {industry}').replace(
+                    '{industry}',
+                    industryOptions.find(i => i.value === state.industry)?.label || ''
+                  )}
+                </Label>
+                <p className="text-sm text-slate-500 mt-1 mb-3">
+                  {state.selectedServices.length === 0
+                    ? (t.onboarding.services?.selectMultiple || 'You can select multiple services')
+                    : `${state.selectedServices.length} service${state.selectedServices.length !== 1 ? 's' : ''} selected`
+                  }
+                </p>
+                <div className="space-y-2 max-h-64 overflow-y-auto">
+                  {suggestedServices.map((service) => (
                     <button
-                      key={jobType}
-                      onClick={() =>
-                        setState((prev) => ({
-                          ...prev,
-                          selectedJobType: jobType,
-                          customJobType: '',
-                        }))
-                      }
+                      key={service}
+                      onClick={() => toggleServiceSelection(service)}
                       className={`w-full rounded-lg border-2 p-3 text-left transition-all ${
-                        state.selectedJobType === jobType
+                        state.selectedServices.includes(service)
                           ? 'border-slate-900 bg-slate-50'
                           : 'border-slate-200 hover:border-slate-300'
                       }`}
                     >
                       <div className="flex items-center justify-between">
-                        <span>{jobType}</span>
-                        {state.selectedJobType === jobType && (
+                        <span>{service}</span>
+                        {state.selectedServices.includes(service) && (
                           <Check className="h-5 w-5 text-slate-900" />
                         )}
                       </div>
                     </button>
                   ))}
                 </div>
-              </div>
-              <div className="relative">
-                <div className="absolute inset-0 flex items-center">
-                  <span className="w-full border-t" />
-                </div>
-                <div className="relative flex justify-center text-xs uppercase">
-                  <span className="bg-white px-2 text-slate-500">{t.onboarding.jobType.or}</span>
-                </div>
-              </div>
-              <div>
-                <Label htmlFor="customJobType">{t.onboarding.jobType.customJobType}</Label>
-                <Input
-                  id="customJobType"
-                  value={state.customJobType}
-                  onChange={(e) =>
-                    setState((prev) => ({
-                      ...prev,
-                      customJobType: e.target.value,
-                      selectedJobType: null,
-                    }))
-                  }
-                  placeholder={t.onboarding.jobType.customJobTypePlaceholder}
-                />
-              </div>
-              <div>
-                <Label htmlFor="basePrice">{t.onboarding.jobType.basePrice.replace('{currency}', state.currency)}</Label>
-                <Input
-                  id="basePrice"
-                  type="number"
-                  value={state.basePrice || ''}
-                  onChange={(e) =>
-                    setState((prev) => ({
-                      ...prev,
-                      basePrice: parseFloat(e.target.value) || 0,
-                    }))
-                  }
-                  placeholder="0"
-                />
-                <p className="mt-1 text-xs text-slate-500">
-                  {t.onboarding.jobType.basePriceHelp}
-                </p>
               </div>
               <div className="flex gap-2 pt-4">
                 <Button variant="outline" onClick={handleBack} className="flex-1">
@@ -387,18 +375,25 @@ export default function OnboardingPage() {
                 <Button
                   onClick={handleCreateCompany}
                   disabled={!canProceedStep3 || loading}
-                  isLoading={loading || aiLoading}
+                  isLoading={loading}
                   className="flex-1"
                 >
-                  {loading || aiLoading ? (
-                    t.onboarding.jobType.creating
-                  ) : (
+                  {loading ? 'Creating...' : (
                     <>
                       {t.onboarding.next}
                       <ArrowRight className="ml-2 h-4 w-4" />
                     </>
                   )}
                 </Button>
+              </div>
+              <div className="text-center">
+                <button
+                  onClick={handleSetUpLater}
+                  disabled={loading}
+                  className="text-sm text-slate-500 hover:text-slate-700 underline"
+                >
+                  {t.onboarding.services?.setUpLater || 'Set up later'}
+                </button>
               </div>
             </CardContent>
           </Card>
@@ -417,29 +412,7 @@ export default function OnboardingPage() {
               </CardDescription>
             </CardHeader>
             <CardContent className="space-y-6">
-              {/* Edit Form Button */}
-              <div className="p-4 rounded-lg bg-blue-50 border border-blue-200">
-                <div className="flex items-start gap-3">
-                  <div className="p-2 bg-blue-100 rounded-lg">
-                    <Sparkles className="h-5 w-5 text-blue-600" />
-                  </div>
-                  <div className="flex-1">
-                    <h4 className="font-medium text-slate-900">Customize Your Form</h4>
-                    <p className="text-sm text-slate-600 mt-1">
-                      Add your own questions, adjust pricing, and personalize the estimator for your business.
-                    </p>
-                    <Button
-                      variant="outline"
-                      className="mt-3"
-                      onClick={() => router.push('/forms')}
-                    >
-                      Edit Form
-                      <ArrowRight className="ml-2 h-4 w-4" />
-                    </Button>
-                  </div>
-                </div>
-              </div>
-
+              {/* Public Link */}
               <div>
                 <Label>{t.onboarding.done.publicLink}</Label>
                 <div className="mt-2 flex items-center gap-2">
@@ -458,6 +431,8 @@ export default function OnboardingPage() {
                   </a>
                 </div>
               </div>
+
+              {/* Embed Code */}
               <div>
                 <Label>{t.onboarding.done.embedCode}</Label>
                 <div className="mt-2 rounded-md bg-slate-100 p-3">
@@ -471,9 +446,34 @@ export default function OnboardingPage() {
                   onClick={copyEmbedCode}
                 >
                   <Copy className="mr-2 h-4 w-4" />
-                  {t.onboarding.done.copyCode}
+                  {codeCopied ? 'Copied!' : t.onboarding.done.copyCode}
                 </Button>
               </div>
+
+              {/* Customize Form Section - Now BELOW copy code */}
+              <div className="p-4 rounded-lg bg-blue-50 border border-blue-200">
+                <div className="flex items-start gap-3">
+                  <div className="p-2 bg-blue-100 rounded-lg">
+                    <Sparkles className="h-5 w-5 text-blue-600" />
+                  </div>
+                  <div className="flex-1">
+                    <h4 className="font-medium text-slate-900">Customize Your Form</h4>
+                    <p className="text-sm text-slate-600 mt-1">
+                      Add your own questions, adjust pricing, and personalize the estimator for your business.
+                    </p>
+                    <Button
+                      variant="outline"
+                      className="mt-3"
+                      onClick={() => router.push('/services')}
+                    >
+                      Edit Services
+                      <ArrowRight className="ml-2 h-4 w-4" />
+                    </Button>
+                  </div>
+                </div>
+              </div>
+
+              {/* Go to Dashboard Button */}
               <Button onClick={handleFinish} className="w-full">
                 {t.onboarding.done.goToDashboard}
                 <ArrowRight className="ml-2 h-4 w-4" />
