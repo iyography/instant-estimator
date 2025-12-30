@@ -70,12 +70,12 @@ export default function ServicesPage() {
     };
     setServices([...services, newService]);
     setShowTemplateModal(false);
-    router.push(`/services/${newService.id}`);
+    router.push(`/forms/${newService.id}`);
   };
 
   const handleCreateFromScratch = () => {
     setShowTemplateModal(false);
-    router.push('/services/new');
+    router.push('/forms/new');
   };
 
   useEffect(() => {
@@ -157,7 +157,7 @@ export default function ServicesPage() {
                     {activeMenu === service.id && (
                       <div className="absolute right-0 top-8 z-10 w-48 rounded-md border border-slate-200 bg-white py-1 shadow-lg">
                         <Link
-                          href={`/services/${service.id}`}
+                          href={`/forms/${service.id}`}
                           className="flex items-center px-4 py-2 text-sm text-slate-700 hover:bg-slate-50"
                           onClick={() => setActiveMenu(null)}
                         >
@@ -191,7 +191,7 @@ export default function ServicesPage() {
                       {service.is_active ? 'Active' : 'Inactive'}
                     </Badge>
                   </div>
-                  <Link href={`/services/${service.id}`}>
+                  <Link href={`/forms/${service.id}`}>
                     <Button variant="outline" className="mt-4 w-full">
                       Edit Questions
                     </Button>
