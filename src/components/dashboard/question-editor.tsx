@@ -76,7 +76,7 @@ export function QuestionEditor({
   allAnswers = [],
   dragHandleProps,
 }: QuestionEditorProps) {
-  const [isExpanded, setIsExpanded] = useState(true);
+  const [isExpanded, setIsExpanded] = useState(false);
   const [showAdvanced, setShowAdvanced] = useState(false);
   const [showConditionBuilder, setShowConditionBuilder] = useState(!!question.condition);
 

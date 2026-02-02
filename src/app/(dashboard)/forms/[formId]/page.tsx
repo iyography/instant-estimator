@@ -14,6 +14,7 @@ import { QuestionEditor } from '@/components/dashboard/question-editor';
 import { formatCurrency } from '@/lib/utils';
 import { previewEstimate } from '@/lib/pricing-engine';
 import { DEMO_JOB_TYPES, DEMO_QUESTIONS, DEMO_ANSWERS } from '@/lib/demo/data';
+import { SERVICE_TEMPLATES, getTemplateById } from '@/lib/service-templates';
 import {
   DndContext,
   closestCenter,
@@ -39,33 +40,13 @@ import {
   Eye,
   EyeOff,
   Zap,
-  Package,
   DollarSign,
-  Clock,
-  GripVertical,
-  Copy,
-  Trash2,
   ChevronDown,
-  ChevronUp,
   Settings,
   Link2,
   Hash,
 } from 'lucide-react';
 import type { JobType, QuestionWithOptions, PriceModifierType } from '@/types/database';
-
-// Icon map for job type icons
-const iconOptions = [
-  { value: 'zap', label: 'Lightning', icon: Zap },
-  { value: 'package', label: 'Package', icon: Package },
-];
-
-interface ServicePackage {
-  id: string;
-  name: string;
-  description: string;
-  discount_percentage: number;
-  included_job_types: string[];
-}
 
 // Sortable Question Wrapper Component
 interface SortableQuestionProps {
@@ -125,7 +106,7 @@ export default function FormBuilderPage() {
   const router = useRouter();
   const { company } = useCompany();
   const formId = params.formId as string;
-  const isNew = formId === 'new';
+  const isNew = formId === 'new' || formId.startsWith('est-');
 
   // DnD sensors
   const sensors = useSensors(
@@ -139,6 +120,7 @@ export default function FormBuilderPage() {
     })
   );
 
+  const [estimatorName, setEstimatorName] = useState('');
   const [jobType, setJobType] = useState<Partial<JobType>>({
     name: '',
     name_sv: '',
@@ -156,18 +138,74 @@ export default function FormBuilderPage() {
   const [saving, setSaving] = useState(false);
   const [aiLoading, setAiLoading] = useState(false);
   const [showPreview, setShowPreview] = useState(false);
-  const [activeTab, setActiveTab] = useState<'questions' | 'settings' | 'packages'>('questions');
-  const [packages, setPackages] = useState<ServicePackage[]>([]);
+  const [activeTab, setActiveTab] = useState<'questions' | 'settings'>('questions');
 
   useEffect(() => {
-    if (isNew || !company) {
+    if (!company) return;
+
+    // Check if this is a new estimator created from a template
+    // The formId would be like 'est-1234567890' and we'd need to look up the template
+    // For now, check URL params or localStorage for template info
+    const urlParams = new URLSearchParams(window.location.search);
+    const templateId = urlParams.get('template');
+
+    if (templateId) {
+      // Load from template
+      const template = getTemplateById(templateId);
+      if (template) {
+        setEstimatorName(template.name);
+        setJobType({
+          name: template.name,
+          description: template.description,
+          base_price: template.basePrice,
+          min_price: template.minPrice,
+          max_price: template.maxPrice,
+          estimated_hours: template.estimatedHours,
+          is_active: true,
+          display_order: 0,
+        });
+
+        // Convert template questions to our format
+        const templateQuestions: QuestionWithOptions[] = template.questions.map((q, idx) => ({
+          id: `tpl-q-${idx}-${Date.now()}`,
+          job_type_id: formId,
+          question_text: q.questionText,
+          question_text_sv: null,
+          question_type: q.type as 'single_choice' | 'multiple_choice',
+          is_required: q.required,
+          display_order: q.order,
+          ai_generated: false,
+          created_at: new Date().toISOString(),
+          updated_at: new Date().toISOString(),
+          answer_options: q.answers.map((a, aIdx) => ({
+            id: `tpl-a-${idx}-${aIdx}-${Date.now()}`,
+            question_id: `tpl-q-${idx}-${Date.now()}`,
+            answer_text: a.answerText,
+            answer_text_sv: null,
+            price_modifier_type: (a.priceModifierType === 'fixed' ? 'fixed' :
+              a.priceModifierType === 'percentage' ? 'percentage' : 'multiply') as PriceModifierType,
+            price_modifier_value: a.priceModifierType === 'fixed' ? a.priceModifierValue : a.priceModifierValue,
+            display_order: a.order,
+            created_at: new Date().toISOString(),
+            updated_at: new Date().toISOString(),
+          })),
+        }));
+
+        setQuestions(templateQuestions);
+        setLoading(false);
+        return;
+      }
+    }
+
+    if (isNew) {
       setLoading(false);
       return;
     }
 
-    // Load demo data
+    // Load existing demo data
     const demoJobType = DEMO_JOB_TYPES.find(jt => jt.id === formId);
     if (demoJobType) {
+      setEstimatorName(demoJobType.name);
       setJobType(demoJobType as unknown as Partial<JobType>);
 
       const demoQuestions = DEMO_QUESTIONS
@@ -193,8 +231,8 @@ export default function FormBuilderPage() {
   };
 
   const handleAISuggestions = async () => {
-    if (!jobType.name) {
-      alert('Enter a job type name first');
+    if (!jobType.name && !estimatorName) {
+      alert('Enter an estimator name first');
       return;
     }
 
@@ -313,22 +351,6 @@ export default function FormBuilderPage() {
     setQuestions(questions.filter((_, i) => i !== index));
   };
 
-  const moveQuestion = (index: number, direction: 'up' | 'down') => {
-    if (direction === 'up' && index === 0) return;
-    if (direction === 'down' && index === questions.length - 1) return;
-
-    const newQuestions = [...questions];
-    const targetIndex = direction === 'up' ? index - 1 : index + 1;
-    [newQuestions[index], newQuestions[targetIndex]] = [newQuestions[targetIndex], newQuestions[index]];
-
-    // Update display orders
-    newQuestions.forEach((q, i) => {
-      q.display_order = i;
-    });
-
-    setQuestions(newQuestions);
-  };
-
   const handleDragEnd = (event: DragEndEvent) => {
     const { active, over } = event;
 
@@ -345,27 +367,6 @@ export default function FormBuilderPage() {
 
       setQuestions(newQuestions);
     }
-  };
-
-  const addPackage = () => {
-    const newPackage: ServicePackage = {
-      id: `pkg-${Date.now()}`,
-      name: '',
-      description: '',
-      discount_percentage: 10,
-      included_job_types: [formId],
-    };
-    setPackages([...packages, newPackage]);
-  };
-
-  const updatePackage = (index: number, updates: Partial<ServicePackage>) => {
-    const newPackages = [...packages];
-    newPackages[index] = { ...newPackages[index], ...updates };
-    setPackages(newPackages);
-  };
-
-  const deletePackage = (index: number) => {
-    setPackages(packages.filter((_, i) => i !== index));
   };
 
   const previewResult = questions.length > 0
@@ -402,7 +403,7 @@ export default function FormBuilderPage() {
           </Link>
           <div>
             <h1 className="text-2xl font-bold text-slate-900">
-              {isNew ? 'Create New Service' : 'Edit Service'}
+              {isNew ? 'Create Estimator' : 'Edit Estimator'}
             </h1>
             <p className="text-slate-600">
               Configure pricing, questions, and conditional logic
@@ -428,7 +429,7 @@ export default function FormBuilderPage() {
         </div>
       </div>
 
-      {/* Tabs */}
+      {/* Tabs - Questions and Settings only (Packages removed) */}
       <div className="flex gap-1 border-b border-slate-200">
         <button
           onClick={() => setActiveTab('questions')}
@@ -451,33 +452,22 @@ export default function FormBuilderPage() {
           <Settings className="h-4 w-4 inline mr-1" />
           Settings
         </button>
-        <button
-          onClick={() => setActiveTab('packages')}
-          className={`px-4 py-2 text-sm font-medium transition-colors border-b-2 -mb-px ${
-            activeTab === 'packages'
-              ? 'border-blue-600 text-blue-600'
-              : 'border-transparent text-slate-600 hover:text-slate-900'
-          }`}
-        >
-          <Package className="h-4 w-4 inline mr-1" />
-          Packages ({packages.length})
-        </button>
       </div>
 
       {/* Settings Tab */}
       {activeTab === 'settings' && (
         <Card>
           <CardHeader>
-            <CardTitle>Service Details</CardTitle>
+            <CardTitle>Estimator Settings</CardTitle>
             <CardDescription>
-              Configure the basic information and pricing for this service
+              Configure the basic information and pricing for this estimator
             </CardDescription>
           </CardHeader>
           <CardContent className="space-y-6">
             {/* Basic Info */}
             <div className="grid gap-4 md:grid-cols-2">
               <div className="space-y-2">
-                <Label htmlFor="name">Service Name *</Label>
+                <Label htmlFor="name">Estimator Name *</Label>
                 <Input
                   id="name"
                   value={jobType.name || ''}
@@ -502,7 +492,7 @@ export default function FormBuilderPage() {
                 id="description"
                 value={jobType.description || ''}
                 onChange={(e) => setJobType({ ...jobType, description: e.target.value })}
-                placeholder="A short description of this service"
+                placeholder="A short description of this estimator"
                 rows={2}
               />
             </div>
@@ -578,8 +568,8 @@ export default function FormBuilderPage() {
               </label>
               <span className="text-sm text-slate-500">
                 {jobType.is_active
-                  ? 'This service is shown in the estimator'
-                  : 'This service is hidden from customers'}
+                  ? 'This estimator is shown to customers'
+                  : 'This estimator is hidden from customers'}
               </span>
             </div>
           </CardContent>
@@ -602,7 +592,7 @@ export default function FormBuilderPage() {
               <Button
                 variant="outline"
                 onClick={handleAISuggestions}
-                disabled={aiLoading || !jobType.name}
+                disabled={aiLoading || (!jobType.name && !estimatorName)}
                 isLoading={aiLoading}
               >
                 <Sparkles className="mr-2 h-4 w-4" />
@@ -649,7 +639,7 @@ export default function FormBuilderPage() {
                   <Button
                     variant="outline"
                     onClick={handleAISuggestions}
-                    disabled={aiLoading || !jobType.name}
+                    disabled={aiLoading || (!jobType.name && !estimatorName)}
                     isLoading={aiLoading}
                   >
                     <Sparkles className="mr-2 h-4 w-4" />
@@ -688,123 +678,6 @@ export default function FormBuilderPage() {
                 </div>
               </SortableContext>
             </DndContext>
-          )}
-        </div>
-      )}
-
-      {/* Packages Tab */}
-      {activeTab === 'packages' && (
-        <div className="space-y-4">
-          <div className="flex items-center justify-between">
-            <div>
-              <h2 className="text-lg font-semibold text-slate-900">Service Packages</h2>
-              <p className="text-sm text-slate-500">
-                Bundle multiple services together with special pricing
-              </p>
-            </div>
-            <Button onClick={addPackage}>
-              <Plus className="mr-2 h-4 w-4" />
-              Create Package
-            </Button>
-          </div>
-
-          {packages.length === 0 ? (
-            <Card>
-              <CardContent className="py-12 text-center">
-                <div className="mx-auto w-12 h-12 rounded-full bg-purple-100 flex items-center justify-center mb-4">
-                  <Package className="h-6 w-6 text-purple-600" />
-                </div>
-                <p className="text-slate-900 font-medium">No packages yet</p>
-                <p className="mt-1 text-sm text-slate-500 max-w-md mx-auto">
-                  Create packages to offer bundled services at a discount. Great for common combinations.
-                </p>
-                <Button onClick={addPackage} className="mt-6">
-                  <Plus className="mr-2 h-4 w-4" />
-                  Create Package
-                </Button>
-              </CardContent>
-            </Card>
-          ) : (
-            <div className="space-y-4">
-              {packages.map((pkg, index) => (
-                <Card key={pkg.id} className="border-purple-200">
-                  <CardHeader className="pb-2">
-                    <div className="flex items-start justify-between">
-                      <div className="flex items-center gap-3">
-                        <div className="w-10 h-10 rounded-lg bg-gradient-to-br from-purple-500 to-pink-500 flex items-center justify-center">
-                          <Package className="h-5 w-5 text-white" />
-                        </div>
-                        <div>
-                          <Input
-                            value={pkg.name}
-                            onChange={(e) => updatePackage(index, { name: e.target.value })}
-                            placeholder="Package name"
-                            className="text-lg font-semibold border-0 p-0 h-auto focus-visible:ring-0"
-                          />
-                        </div>
-                      </div>
-                      <Button
-                        variant="ghost"
-                        size="icon"
-                        className="text-red-500 hover:text-red-600"
-                        onClick={() => deletePackage(index)}
-                      >
-                        <Trash2 className="h-4 w-4" />
-                      </Button>
-                    </div>
-                  </CardHeader>
-                  <CardContent className="space-y-4">
-                    <div className="space-y-2">
-                      <Label>Description</Label>
-                      <Textarea
-                        value={pkg.description}
-                        onChange={(e) => updatePackage(index, { description: e.target.value })}
-                        placeholder="Describe what's included in this package"
-                        rows={2}
-                      />
-                    </div>
-                    <div className="grid gap-4 md:grid-cols-2">
-                      <div className="space-y-2">
-                        <Label>Bundle Discount (%)</Label>
-                        <Input
-                          type="number"
-                          min="0"
-                          max="100"
-                          value={pkg.discount_percentage}
-                          onChange={(e) => updatePackage(index, { discount_percentage: parseInt(e.target.value) || 0 })}
-                        />
-                        <p className="text-xs text-slate-500">
-                          Customers save {pkg.discount_percentage}% when booking this package
-                        </p>
-                      </div>
-                      <div className="space-y-2">
-                        <Label>Included Services</Label>
-                        <div className="flex flex-wrap gap-2">
-                          {DEMO_JOB_TYPES.slice(0, 4).map(jt => (
-                            <button
-                              key={jt.id}
-                              onClick={() => {
-                                const included = pkg.included_job_types.includes(jt.id)
-                                  ? pkg.included_job_types.filter(id => id !== jt.id)
-                                  : [...pkg.included_job_types, jt.id];
-                                updatePackage(index, { included_job_types: included });
-                              }}
-                              className={`px-3 py-1.5 rounded-full text-sm transition-colors ${
-                                pkg.included_job_types.includes(jt.id)
-                                  ? 'bg-purple-100 text-purple-700 border border-purple-300'
-                                  : 'bg-slate-100 text-slate-600 border border-slate-200 hover:bg-slate-200'
-                              }`}
-                            >
-                              {jt.name}
-                            </button>
-                          ))}
-                        </div>
-                      </div>
-                    </div>
-                  </CardContent>
-                </Card>
-              ))}
-            </div>
           )}
         </div>
       )}
