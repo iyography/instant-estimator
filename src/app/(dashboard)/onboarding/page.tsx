@@ -23,7 +23,7 @@ interface OnboardingState {
   website: string;
   currency: Currency;
   language: Language;
-  selectedServices: string[];
+  selectedService: string | null;
 }
 
 export default function OnboardingPage() {
@@ -62,7 +62,7 @@ export default function OnboardingPage() {
     website: '',
     currency: 'USD',
     language: 'en',
-    selectedServices: [],
+    selectedService: null,
   });
   const [loading, setLoading] = useState(false);
   const [company, setCompany] = useState<Company | null>(null);
@@ -130,18 +130,16 @@ export default function OnboardingPage() {
     }
   };
 
-  const toggleServiceSelection = (service: string) => {
+  const selectService = (service: string) => {
     setState((prev) => ({
       ...prev,
-      selectedServices: prev.selectedServices.includes(service)
-        ? prev.selectedServices.filter(s => s !== service)
-        : [...prev.selectedServices, service],
+      selectedService: prev.selectedService === service ? null : service,
     }));
   };
 
   const canProceedStep1 = state.companyName.trim() !== '' && state.industry;
   const canProceedStep2 = true; // Language and currency have defaults
-  const canProceedStep3 = state.selectedServices.length > 0;
+  const canProceedStep3 = state.selectedService !== null;
 
   const progressSteps = [
     t.onboarding.steps.company,
@@ -341,25 +339,25 @@ export default function OnboardingPage() {
                   )}
                 </Label>
                 <p className="text-sm text-slate-500 mt-1 mb-3">
-                  {state.selectedServices.length === 0
-                    ? (t.onboarding.services?.selectMultiple || 'You can select multiple services')
-                    : `${state.selectedServices.length} service${state.selectedServices.length !== 1 ? 's' : ''} selected`
+                  {state.selectedService
+                    ? `Selected: ${state.selectedService}`
+                    : 'Select a service for your estimator'
                   }
                 </p>
                 <div className="space-y-2 max-h-64 overflow-y-auto">
                   {suggestedServices.map((service) => (
                     <button
                       key={service}
-                      onClick={() => toggleServiceSelection(service)}
+                      onClick={() => selectService(service)}
                       className={`w-full rounded-lg border-2 p-3 text-left transition-all ${
-                        state.selectedServices.includes(service)
+                        state.selectedService === service
                           ? 'border-slate-900 bg-slate-50'
                           : 'border-slate-200 hover:border-slate-300'
                       }`}
                     >
                       <div className="flex items-center justify-between">
                         <span>{service}</span>
-                        {state.selectedServices.includes(service) && (
+                        {state.selectedService === service && (
                           <Check className="h-5 w-5 text-slate-900" />
                         )}
                       </div>
@@ -457,16 +455,16 @@ export default function OnboardingPage() {
                     <Sparkles className="h-5 w-5 text-blue-600" />
                   </div>
                   <div className="flex-1">
-                    <h4 className="font-medium text-slate-900">Customize Your Form</h4>
+                    <h4 className="font-medium text-slate-900">Customize your instant estimator</h4>
                     <p className="text-sm text-slate-600 mt-1">
                       Add your own questions, adjust pricing, and personalize the estimator for your business.
                     </p>
                     <Button
                       variant="outline"
                       className="mt-3"
-                      onClick={() => router.push('/services')}
+                      onClick={() => router.push('/forms')}
                     >
-                      Edit Services
+                      Edit instant estimator
                       <ArrowRight className="ml-2 h-4 w-4" />
                     </Button>
                   </div>

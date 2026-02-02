@@ -148,7 +148,7 @@ export default function FormsPage() {
         <div>
           <h1 className="text-2xl font-bold text-slate-900">Estimators</h1>
           <p className="text-slate-600">
-            Create and manage estimator forms. Each estimator can include one or more services.
+            Create and manage estimator forms. Each estimator includes one service.
           </p>
         </div>
         <Button onClick={openCreateModal}>
