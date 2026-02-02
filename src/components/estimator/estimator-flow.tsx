@@ -1,6 +1,6 @@
 'use client';
 
-import { useState, useEffect } from 'react';
+import { useState, useEffect, useMemo, useCallback } from 'react';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
@@ -63,26 +63,37 @@ export function EstimatorFlow({
     high: number;
   } | null>(null);
 
-  const selectedJobType = jobTypes.find((jt) => jt.id === formState.jobTypeId);
-  const questions = selectedJobType?.questions || [];
+  const selectedJobType = useMemo(
+    () => jobTypes.find((jt) => jt.id === formState.jobTypeId),
+    [jobTypes, formState.jobTypeId]
+  );
+  const questions = useMemo(
+    () => selectedJobType?.questions || [],
+    [selectedJobType]
+  );
 
   // Calculate total steps: Job type selection (if multiple) + Questions + Contact Info
   // Contact info now comes AFTER questions but BEFORE showing estimate
   const showJobTypeSelection = jobTypes.length > 1;
-  const totalSteps =
-    (showJobTypeSelection ? 1 : 0) + questions.length + 1; // +1 for contact info
+  const totalSteps = useMemo(
+    () => (showJobTypeSelection ? 1 : 0) + questions.length + 1,
+    [showJobTypeSelection, questions.length]
+  );
 
   // Determine current step type
   const currentQuestionIndex = showJobTypeSelection ? step - 1 : step;
-  const currentQuestion =
-    currentQuestionIndex >= 0 && currentQuestionIndex < questions.length
-      ? questions[currentQuestionIndex]
-      : null;
+  const currentQuestion = useMemo(
+    () =>
+      currentQuestionIndex >= 0 && currentQuestionIndex < questions.length
+        ? questions[currentQuestionIndex]
+        : null,
+    [currentQuestionIndex, questions]
+  );
   const isContactStep = currentQuestionIndex === questions.length;
   const isJobTypeStep = showJobTypeSelection && step === 0;
 
-  // Get selected answers for price calculation
-  const getSelectedAnswers = (): AnswerOption[] => {
+  // Get selected answers for price calculation - memoized
+  const getSelectedAnswers = useCallback((): AnswerOption[] => {
     const answers: AnswerOption[] = [];
     for (const question of questions) {
       const selectedIds = formState.answers[question.id] || [];
@@ -92,7 +103,7 @@ export function EstimatorFlow({
       }
     }
     return answers;
-  };
+  }, [questions, formState.answers]);
 
   // Calculate estimate when answers change (but don't show it until after contact info)
   useEffect(() => {
@@ -111,14 +122,14 @@ export function EstimatorFlow({
     }
   }, [formState.answers, selectedJobType, company]);
 
-  const handleJobTypeSelect = (jobTypeId: string) => {
+  const handleJobTypeSelect = useCallback((jobTypeId: string) => {
     setFormState((prev) => ({
       ...prev,
       jobTypeId,
       answers: {},
     }));
     setStep(1);
-  };
+  }, []);
 
   const handleAnswerSelect = (questionId: string, answerId: string) => {
     const question = questions.find((q) => q.id === questionId);
@@ -151,17 +162,13 @@ export function EstimatorFlow({
     }
   };
 
-  const handleNext = () => {
-    if (step < totalSteps - 1) {
-      setStep(step + 1);
-    }
-  };
+  const handleNext = useCallback(() => {
+    setStep((prev) => (prev < totalSteps - 1 ? prev + 1 : prev));
+  }, [totalSteps]);
 
-  const handleBack = () => {
-    if (step > 0) {
-      setStep(step - 1);
-    }
-  };
+  const handleBack = useCallback(() => {
+    setStep((prev) => (prev > 0 ? prev - 1 : prev));
+  }, []);
 
   const handleSubmit = async () => {
     if (!selectedJobType || !estimate) return;
