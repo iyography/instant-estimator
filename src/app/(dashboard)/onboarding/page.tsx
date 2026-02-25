@@ -3,7 +3,7 @@
 import { useState } from 'react';
 import { useRouter } from 'next/navigation';
 import { useDashboardLanguage } from '@/hooks/use-dashboard-language';
-import { DEMO_COMPANY } from '@/lib/demo/data';
+import { createClient } from '@/lib/supabase/client';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
@@ -78,41 +78,79 @@ export default function OnboardingPage() {
     setState((prev) => ({ ...prev, step: prev.step - 1 }));
   };
 
+  const createCompanyInDb = async (): Promise<Company | null> => {
+    const supabase = createClient();
+    const { data: { user } } = await supabase.auth.getUser();
+
+    if (!user) {
+      setError('You must be logged in to create a company');
+      return null;
+    }
+
+    const slug = generateSlug(state.companyName);
+
+    const { data, error: dbError } = await supabase
+      .from('companies')
+      .insert({
+        user_id: user.id,
+        name: state.companyName,
+        slug,
+        email: state.email || null,
+        phone: state.phone || null,
+        website_url: state.website || null,
+        industry: state.industry,
+        default_currency: state.currency,
+        default_language: state.language,
+      })
+      .select()
+      .single();
+
+    if (dbError) {
+      setError(dbError.message);
+      return null;
+    }
+
+    return data as Company;
+  };
+
+  const [error, setError] = useState<string | null>(null);
+
   const handleSetUpLater = async () => {
-    // Create company without services and go directly to dashboard
     setLoading(true);
-    await new Promise(resolve => setTimeout(resolve, 1000));
+    setError(null);
 
-    const demoCompany = {
-      ...DEMO_COMPANY,
-      name: state.companyName || DEMO_COMPANY.name,
-      slug: generateSlug(state.companyName || DEMO_COMPANY.name),
-      industry: state.industry,
-      default_currency: state.currency,
-      default_language: state.language,
-    } as unknown as Company;
+    const newCompany = await createCompanyInDb();
+    if (newCompany) {
+      setCompany(newCompany);
+      router.push('/overview');
+    }
 
-    setCompany(demoCompany);
     setLoading(false);
-    router.push('/overview');
   };
 
   const handleCreateCompany = async () => {
     setLoading(true);
+    setError(null);
 
-    // Simulate company creation
-    await new Promise(resolve => setTimeout(resolve, 1500));
+    const newCompany = await createCompanyInDb();
+    if (!newCompany) {
+      setLoading(false);
+      return;
+    }
 
-    const demoCompany = {
-      ...DEMO_COMPANY,
-      name: state.companyName || DEMO_COMPANY.name,
-      slug: generateSlug(state.companyName || DEMO_COMPANY.name),
-      industry: state.industry,
-      default_currency: state.currency,
-      default_language: state.language,
-    } as unknown as Company;
+    // Create the selected job type
+    if (state.selectedService) {
+      const supabase = createClient();
+      await supabase.from('job_types').insert({
+        company_id: newCompany.id,
+        name: state.selectedService,
+        base_price: 0,
+        is_active: true,
+        display_order: 0,
+      });
+    }
 
-    setCompany(demoCompany);
+    setCompany(newCompany);
     setLoading(false);
     handleNext();
   };
@@ -195,6 +233,12 @@ export default function OnboardingPage() {
               ))}
             </div>
           </div>
+
+        {error && (
+          <div className="mb-4 rounded-md bg-red-50 p-3 text-sm text-red-600">
+            {error}
+          </div>
+        )}
 
         {/* Step 1: Company Info */}
         {state.step === 1 && (
