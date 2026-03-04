@@ -1,5 +1,6 @@
+import { notFound } from 'next/navigation';
+import { createClient } from '@/lib/supabase/server';
 import { EstimatorPage } from '@/components/estimator/estimator-page';
-import { DEMO_COMPANY, DEMO_JOB_TYPES, DEMO_QUESTIONS, DEMO_ANSWERS } from '@/lib/demo/data';
 
 interface Props {
   params: Promise<{
@@ -7,25 +8,28 @@ interface Props {
   }>;
 }
 
-// Build demo job types with nested questions and answers
-function getDemoJobTypesWithQuestions() {
-  return DEMO_JOB_TYPES.filter(jt => jt.is_active).map(jt => {
-    const questions = DEMO_QUESTIONS.filter(q => q.job_type_id === jt.id).map(q => ({
-      ...q,
-      answer_options: DEMO_ANSWERS.filter(a => a.question_id === q.id).sort(
-        (a, b) => a.display_order - b.display_order
-      ),
-    })).sort((a, b) => a.display_order - b.display_order);
-
-    return {
-      ...jt,
-      questions,
-    };
-  });
-}
-
 export default async function PublicEstimatorPage({ params }: Props) {
-  // Always use demo data
-  const demoJobTypes = getDemoJobTypesWithQuestions();
-  return <EstimatorPage company={DEMO_COMPANY as any} jobTypes={demoJobTypes as any} />;
+  const { companySlug } = await params;
+  const supabase = await createClient();
+
+  // Fetch company by slug
+  const { data: company, error: companyError } = await supabase
+    .from('companies')
+    .select('*')
+    .eq('slug', companySlug)
+    .single();
+
+  if (companyError || !company) {
+    notFound();
+  }
+
+  // Fetch active job types with nested questions and answer options
+  const { data: jobTypes } = await supabase
+    .from('job_types')
+    .select('*, questions(*, answer_options(*))')
+    .eq('company_id', company.id)
+    .eq('is_active', true)
+    .order('display_order');
+
+  return <EstimatorPage company={company as any} jobTypes={(jobTypes || []) as any} />;
 }

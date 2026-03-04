@@ -11,7 +11,7 @@ import { Textarea } from '@/components/ui/textarea';
 import { Badge } from '@/components/ui/badge';
 import { Card, CardContent, CardHeader, CardTitle, CardDescription } from '@/components/ui/card';
 import { formatCurrency, formatDate, getStatusColor, cn } from '@/lib/utils';
-import { DEMO_LEADS, DEMO_JOB_TYPES, DEMO_QUESTIONS, DEMO_ANSWERS } from '@/lib/demo/data';
+import { createClient } from '@/lib/supabase/client';
 import {
   ArrowLeft,
   Mail,
@@ -73,29 +73,67 @@ export default function LeadDetailPage() {
   useEffect(() => {
     if (!company) return;
 
-    // Load demo data
-    const demoLead = DEMO_LEADS.find(l => l.id === leadId);
-    if (demoLead) {
-      setLead(demoLead as unknown as ExtendedLead);
-      setNotes(demoLead.notes || '');
-      setStatus(demoLead.status);
+    const fetchData = async () => {
+      const supabase = createClient();
 
-      const demoJobType = DEMO_JOB_TYPES.find(jt => jt.id === demoLead.job_type_id);
-      if (demoJobType) {
-        setJobType(demoJobType as unknown as JobType);
-        const demoQuestions = DEMO_QUESTIONS.filter(q => q.job_type_id === demoJobType.id);
-        setQuestions(demoQuestions as unknown as Question[]);
-        const questionIds = demoQuestions.map(q => q.id);
-        const demoAnswers = DEMO_ANSWERS.filter(a => questionIds.includes(a.question_id));
-        setAnswerOptions(demoAnswers as unknown as AnswerOption[]);
+      // Fetch lead with nested responses (including question and answer_option)
+      const { data: leadData, error: leadError } = await supabase
+        .from('leads')
+        .select('*, lead_responses(*, question:questions(*), answer_option:answer_options(*))')
+        .eq('id', leadId)
+        .single();
+
+      if (leadError || !leadData) {
+        setLoading(false);
+        return;
       }
-    }
-    setLoading(false);
+
+      const fetchedLead = leadData as unknown as ExtendedLead;
+      setLead(fetchedLead);
+      setNotes(fetchedLead.notes || '');
+      setStatus(fetchedLead.status);
+
+      // Extract questions and answer options from nested lead_responses
+      if (fetchedLead.lead_responses) {
+        const extractedQuestions: Question[] = [];
+        const extractedAnswerOptions: AnswerOption[] = [];
+
+        for (const response of fetchedLead.lead_responses) {
+          if (response.question && !extractedQuestions.find(q => q.id === response.question!.id)) {
+            extractedQuestions.push(response.question);
+          }
+          if (response.answer_option && !extractedAnswerOptions.find(a => a.id === response.answer_option!.id)) {
+            extractedAnswerOptions.push(response.answer_option);
+          }
+        }
+
+        setQuestions(extractedQuestions);
+        setAnswerOptions(extractedAnswerOptions);
+      }
+
+      // Fetch job type
+      if (fetchedLead.job_type_id) {
+        const { data: jobTypeData } = await supabase
+          .from('job_types')
+          .select('*')
+          .eq('id', fetchedLead.job_type_id)
+          .single();
+
+        if (jobTypeData) {
+          setJobType(jobTypeData as JobType);
+        }
+      }
+
+      setLoading(false);
+    };
+
+    fetchData();
   }, [leadId, company]);
 
   const handleSave = async () => {
     setSaving(true);
-    await new Promise(resolve => setTimeout(resolve, 500));
+    const supabase = createClient();
+    await supabase.from('leads').update({ status, notes }).eq('id', leadId);
     setLead((prev) => prev ? { ...prev, status, notes } : null);
     setSaving(false);
   };

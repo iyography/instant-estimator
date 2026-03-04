@@ -9,7 +9,7 @@ import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { Badge } from '@/components/ui/badge';
 import { formatCurrency } from '@/lib/utils';
-import { DEMO_JOB_TYPES } from '@/lib/demo/data';
+import { createClient } from '@/lib/supabase/client';
 import { SERVICE_TEMPLATES, getTemplatesByIndustry, type ServiceTemplate } from '@/lib/service-templates';
 import { Plus, FileText, MoreVertical, Pencil, Trash2, X, Zap, Flame, Droplets, Snowflake, Home, Wrench, PaintBucket, TreeDeciduous, Sparkles, LayoutTemplate, FileEdit, GripVertical } from 'lucide-react';
 import type { JobType } from '@/types/database';
@@ -80,9 +80,24 @@ export default function ServicesPage() {
 
   useEffect(() => {
     if (!company) return;
-    // Always use demo data
-    setServices(DEMO_JOB_TYPES as unknown as JobType[]);
-    setLoading(false);
+
+    const fetchServices = async () => {
+      const supabase = createClient();
+      const { data, error } = await supabase
+        .from('job_types')
+        .select('*')
+        .eq('company_id', company.id)
+        .order('display_order');
+
+      if (error) {
+        console.error('Error fetching services:', error);
+      } else {
+        setServices((data || []) as JobType[]);
+      }
+      setLoading(false);
+    };
+
+    fetchServices();
   }, [company]);
 
   const handleDeleteService = async (id: string) => {

@@ -10,7 +10,7 @@ import { Badge } from '@/components/ui/badge';
 import { LeadValueBadge } from '@/components/crm/lead-value-badge';
 import { formatCurrency, formatDate, getStatusColor, cn } from '@/lib/utils';
 import { calculateLeadValue } from '@/lib/lead-scoring';
-import { DEMO_LEADS, DEMO_JOB_TYPES, getDemoStats } from '@/lib/demo/data';
+import { createClient } from '@/lib/supabase/client';
 import {
   Users,
   FileText,
@@ -30,7 +30,7 @@ import {
   ArrowUpRight,
   ArrowDownRight,
 } from 'lucide-react';
-import type { Lead, LeadStatus, Currency } from '@/types/database';
+import type { Lead, LeadStatus, Currency, JobType } from '@/types/database';
 
 interface DashboardStats {
   totalLeads: number;
@@ -230,17 +230,60 @@ export default function OverviewPage() {
     estimatedRevenue: 0,
   });
   const [recentLeads, setRecentLeads] = useState<Lead[]>([]);
+  const [allLeads, setAllLeads] = useState<Lead[]>([]);
+  const [jobTypes, setJobTypes] = useState<JobType[]>([]);
   const [loading, setLoading] = useState(true);
   const [copied, setCopied] = useState(false);
 
   useEffect(() => {
     if (!company) return;
 
-    // Always use demo data
-    const demoStats = getDemoStats() as unknown as DashboardStats;
-    setStats(demoStats);
-    setRecentLeads(DEMO_LEADS.slice(0, 5) as unknown as Lead[]);
-    setLoading(false);
+    const fetchData = async () => {
+      try {
+        const supabase = createClient();
+
+        // Fetch all leads for this company
+        const { data: leads } = await supabase
+          .from('leads')
+          .select('*')
+          .eq('company_id', company.id)
+          .order('created_at', { ascending: false });
+
+        // Fetch all job types for this company
+        const { data: fetchedJobTypes } = await supabase
+          .from('job_types')
+          .select('*')
+          .eq('company_id', company.id);
+
+        const allLeadsData = (leads || []) as Lead[];
+        const jobTypesData = (fetchedJobTypes || []) as JobType[];
+
+        setAllLeads(allLeadsData);
+        setRecentLeads(allLeadsData.slice(0, 5));
+        setJobTypes(jobTypesData);
+
+        // Calculate stats from real data
+        const totalLeads = allLeadsData.length;
+        const newLeads = allLeadsData.filter(l => l.status === 'new').length;
+        const wonLeads = allLeadsData.filter(l => l.status === 'won').length;
+        const estimatedRevenue = allLeadsData
+          .filter(l => l.status === 'won')
+          .reduce((sum, l) => sum + (l.estimated_price_low || 0), 0);
+
+        setStats({
+          totalLeads,
+          newLeads,
+          wonLeads,
+          estimatedRevenue,
+        });
+      } catch (error) {
+        console.error('Error fetching dashboard data:', error);
+      } finally {
+        setLoading(false);
+      }
+    };
+
+    fetchData();
   }, [company]);
 
   const conversionRate = stats.totalLeads > 0
@@ -249,7 +292,7 @@ export default function OverviewPage() {
 
   // Calculate status distribution for donut chart
   const statusDistribution = useMemo(() => {
-    const distribution = DEMO_LEADS.reduce((acc, lead) => {
+    const distribution = allLeads.reduce((acc, lead) => {
       acc[lead.status] = (acc[lead.status] || 0) + 1;
       return acc;
     }, {} as Record<string, number>);
@@ -261,11 +304,11 @@ export default function OverviewPage() {
       { label: 'Won', value: distribution['won'] || 0, color: '#22c55e' },
       { label: 'Lost', value: distribution['lost'] || 0, color: '#94a3b8' },
     ];
-  }, []);
+  }, [allLeads]);
 
   // Calculate service popularity
   const servicePopularity = useMemo(() => {
-    const popularity = DEMO_LEADS.reduce((acc, lead) => {
+    const popularity = allLeads.reduce((acc, lead) => {
       acc[lead.job_type_id] = (acc[lead.job_type_id] || 0) + 1;
       return acc;
     }, {} as Record<string, number>);
@@ -273,12 +316,12 @@ export default function OverviewPage() {
     return Object.entries(popularity)
       .map(([id, count]) => ({
         id,
-        name: DEMO_JOB_TYPES.find(jt => jt.id === id)?.name || 'Unknown',
+        name: jobTypes.find(jt => jt.id === id)?.name || 'Unknown',
         count,
       }))
       .sort((a, b) => b.count - a.count)
       .slice(0, 5);
-  }, []);
+  }, [allLeads, jobTypes]);
 
   // Monthly data for bar chart
   const monthlyData = useMemo(() => {
@@ -482,7 +525,7 @@ export default function OverviewPage() {
               <div className="space-y-3">
                 {recentLeads.map((lead) => {
                   const leadValue = calculateLeadValue(lead, company?.default_currency as Currency);
-                  const jobType = DEMO_JOB_TYPES.find(jt => jt.id === lead.job_type_id);
+                  const jobType = jobTypes.find(jt => jt.id === lead.job_type_id);
                   return (
                     <Link
                       key={lead.id}

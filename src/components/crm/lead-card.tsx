@@ -6,7 +6,6 @@ import { formatCurrency, formatDate } from '@/lib/utils';
 import { cn } from '@/lib/utils';
 import { calculateLeadValue } from '@/lib/lead-scoring';
 import { LeadValueBadge } from './lead-value-badge';
-import { DEMO_JOB_TYPES } from '@/lib/demo/data';
 import { Clock, MapPin, Zap, FileText } from 'lucide-react';
 import type { Lead, Currency, Language } from '@/types/database';
 
@@ -22,6 +21,7 @@ interface LeadCardProps {
   onClick: () => void;
   currency: string;
   language: string;
+  jobTypeName?: string;
   isDragging?: boolean;
   showDetails?: boolean;
 }
@@ -31,6 +31,7 @@ export function LeadCard({
   onClick,
   currency,
   language,
+  jobTypeName,
   isDragging = false,
   showDetails = false,
 }: LeadCardProps) {
@@ -49,7 +50,6 @@ export function LeadCard({
   };
 
   const leadValue = calculateLeadValue(lead, currency as Currency);
-  const jobType = DEMO_JOB_TYPES.find(jt => jt.id === lead.job_type_id);
 
   // Calculate days since created
   const daysSince = Math.floor((Date.now() - new Date(lead.created_at).getTime()) / (1000 * 60 * 60 * 24));
@@ -81,10 +81,10 @@ export function LeadCard({
       </div>
 
       {/* Job Type Badge */}
-      {jobType && (
+      {jobTypeName && (
         <div className="mt-2 flex items-center gap-1.5">
           <Zap className="h-3.5 w-3.5 text-blue-500" />
-          <span className="text-xs font-medium text-slate-600">{jobType.name}</span>
+          <span className="text-xs font-medium text-slate-600">{jobTypeName}</span>
         </div>
       )}
 

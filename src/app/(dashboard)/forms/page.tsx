@@ -10,7 +10,7 @@ import { Button } from '@/components/ui/button';
 import { Badge } from '@/components/ui/badge';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
-import { DEMO_JOB_TYPES, DEMO_FORMS } from '@/lib/demo/data';
+import { createClient } from '@/lib/supabase/client';
 import { SERVICE_TEMPLATES, getTemplateIndustries } from '@/lib/service-templates';
 import { formatCurrency } from '@/lib/utils';
 import {
@@ -58,6 +58,7 @@ export default function FormsPage() {
   const [newFormSlug, setNewFormSlug] = useState('');
   const [selectedTemplateId, setSelectedTemplateId] = useState<string | null>(null);
   const [selectedIndustry, setSelectedIndustry] = useState<string>('all');
+  const [activeServiceCount, setActiveServiceCount] = useState(0);
 
   // Get unique industries from templates
   const industries = ['all', ...getTemplateIndustries()];
@@ -69,9 +70,39 @@ export default function FormsPage() {
 
   useEffect(() => {
     if (!company) return;
-    // Load demo data
-    setEstimators(DEMO_FORMS as unknown as EstimatorForm[]);
-    setLoading(false);
+
+    const fetchData = async () => {
+      const supabase = createClient();
+
+      // Fetch estimator forms
+      const { data: formsData, error: formsError } = await supabase
+        .from('forms')
+        .select('*')
+        .eq('company_id', company.id);
+
+      if (formsError) {
+        console.error('Error fetching forms:', formsError);
+      } else {
+        setEstimators((formsData || []) as EstimatorForm[]);
+      }
+
+      // Fetch active service count for the Default Estimator card
+      const { count, error: countError } = await supabase
+        .from('job_types')
+        .select('*', { count: 'exact', head: true })
+        .eq('company_id', company.id)
+        .eq('is_active', true);
+
+      if (countError) {
+        console.error('Error fetching job types count:', countError);
+      } else {
+        setActiveServiceCount(count || 0);
+      }
+
+      setLoading(false);
+    };
+
+    fetchData();
   }, [company]);
 
   const handleCreateEstimator = () => {
@@ -164,7 +195,7 @@ export default function FormsPage() {
             <div>
               <CardTitle className="text-lg">Default Estimator</CardTitle>
               <CardDescription>
-                Uses all active services ({DEMO_JOB_TYPES.filter((s: any) => s.is_active).length} services)
+                Uses all active services ({activeServiceCount} services)
               </CardDescription>
             </div>
             <Badge variant="success">Active</Badge>

@@ -13,7 +13,7 @@ import { Card, CardContent, CardHeader, CardTitle, CardDescription } from '@/com
 import { QuestionEditor } from '@/components/dashboard/question-editor';
 import { formatCurrency } from '@/lib/utils';
 import { previewEstimate } from '@/lib/pricing-engine';
-import { DEMO_JOB_TYPES, DEMO_QUESTIONS, DEMO_ANSWERS } from '@/lib/demo/data';
+import { createClient } from '@/lib/supabase/client';
 import { SERVICE_TEMPLATES, getTemplateById } from '@/lib/service-templates';
 import {
   DndContext,
@@ -144,8 +144,6 @@ export default function FormBuilderPage() {
     if (!company) return;
 
     // Check if this is a new estimator created from a template
-    // The formId would be like 'est-1234567890' and we'd need to look up the template
-    // For now, check URL params or localStorage for template info
     const urlParams = new URLSearchParams(window.location.search);
     const templateId = urlParams.get('template');
 
@@ -202,25 +200,52 @@ export default function FormBuilderPage() {
       return;
     }
 
-    // Load existing demo data
-    const demoJobType = DEMO_JOB_TYPES.find(jt => jt.id === formId);
-    if (demoJobType) {
-      setEstimatorName(demoJobType.name);
-      setJobType(demoJobType as unknown as Partial<JobType>);
+    // Fetch real data from Supabase
+    const fetchData = async () => {
+      const supabase = createClient();
 
-      const demoQuestions = DEMO_QUESTIONS
-        .filter(q => q.job_type_id === formId)
-        .sort((a, b) => a.display_order - b.display_order)
-        .map(q => ({
-          ...q,
-          answer_options: DEMO_ANSWERS
-            .filter(a => a.question_id === q.id)
-            .sort((a, b) => a.display_order - b.display_order),
-        }));
+      // Fetch the job type by ID
+      const { data: jobTypeData, error: jobTypeError } = await supabase
+        .from('job_types')
+        .select('*')
+        .eq('id', formId)
+        .single();
 
-      setQuestions(demoQuestions as unknown as QuestionWithOptions[]);
-    }
-    setLoading(false);
+      if (jobTypeError) {
+        console.error('Error fetching job type:', jobTypeError);
+        setLoading(false);
+        return;
+      }
+
+      if (jobTypeData) {
+        setEstimatorName(jobTypeData.name);
+        setJobType(jobTypeData as Partial<JobType>);
+
+        // Fetch questions with their answer options
+        const { data: questionsData, error: questionsError } = await supabase
+          .from('questions')
+          .select('*, answer_options(*)')
+          .eq('job_type_id', formId)
+          .order('display_order');
+
+        if (questionsError) {
+          console.error('Error fetching questions:', questionsError);
+        } else {
+          // Sort answer_options by display_order within each question
+          const sortedQuestions = (questionsData || []).map((q: any) => ({
+            ...q,
+            answer_options: (q.answer_options || []).sort(
+              (a: any, b: any) => a.display_order - b.display_order
+            ),
+          }));
+          setQuestions(sortedQuestions as QuestionWithOptions[]);
+        }
+      }
+
+      setLoading(false);
+    };
+
+    fetchData();
   }, [formId, isNew, company]);
 
   const handleSave = async () => {

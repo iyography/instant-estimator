@@ -12,7 +12,7 @@ import { KanbanBoard } from '@/components/crm/kanban-board';
 import { LeadValueBadge } from '@/components/crm/lead-value-badge';
 import { formatCurrency, formatDate, getStatusColor } from '@/lib/utils';
 import { calculateLeadValue } from '@/lib/lead-scoring';
-import { DEMO_LEADS, DEMO_JOB_TYPES } from '@/lib/demo/data';
+import { createClient } from '@/lib/supabase/client';
 import { Search, Download, LayoutGrid, List, FileText, ChevronUp, ChevronDown, Calendar, X } from 'lucide-react';
 import type { Lead, LeadStatus, JobType, Currency } from '@/types/database';
 
@@ -169,13 +169,29 @@ export default function LeadsPage() {
   useEffect(() => {
     if (!company) return;
 
-    // Always use demo data
-    setLeads(DEMO_LEADS as unknown as Lead[]);
-    setJobTypes(DEMO_JOB_TYPES as unknown as JobType[]);
-    setLoading(false);
+    const fetchData = async () => {
+      const supabase = createClient();
+      const { data: leadsData } = await supabase
+        .from('leads')
+        .select('*')
+        .eq('company_id', company.id)
+        .order('created_at', { ascending: false });
+      const { data: jobTypesData } = await supabase
+        .from('job_types')
+        .select('*')
+        .eq('company_id', company.id);
+      setLeads((leadsData || []) as Lead[]);
+      setJobTypes((jobTypesData || []) as JobType[]);
+      setLoading(false);
+    };
+
+    fetchData();
   }, [company]);
 
   const handleStatusChange = async (leadId: string, newStatus: LeadStatus) => {
+    // Update in Supabase
+    const supabase = createClient();
+    await supabase.from('leads').update({ status: newStatus }).eq('id', leadId);
     // Update local state
     setLeads((prev) =>
       prev.map((l) => (l.id === leadId ? { ...l, status: newStatus } : l))
@@ -371,6 +387,7 @@ export default function LeadsPage() {
       {view === 'kanban' ? (
         <KanbanBoard
           leads={filteredLeads}
+          jobTypes={jobTypes}
           onStatusChange={handleStatusChange}
           onLeadClick={handleLeadClick}
           currency={company?.default_currency || 'SEK'}

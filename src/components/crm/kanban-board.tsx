@@ -19,12 +19,13 @@ import {
 import { KanbanColumn } from './kanban-column';
 import { LeadCard } from './lead-card';
 import { useDashboardLanguage } from '@/hooks/use-dashboard-language';
-import type { Lead, LeadStatus } from '@/types/database';
+import type { Lead, LeadStatus, JobType } from '@/types/database';
 
 const MAX_VISIBLE_LEADS = 30;
 
 interface KanbanBoardProps {
   leads: Lead[];
+  jobTypes?: JobType[];
   onStatusChange: (leadId: string, newStatus: LeadStatus) => Promise<void>;
   onLeadClick: (lead: Lead) => void;
   currency: string;
@@ -33,6 +34,7 @@ interface KanbanBoardProps {
 
 export function KanbanBoard({
   leads,
+  jobTypes = [],
   onStatusChange,
   onLeadClick,
   currency,
@@ -119,6 +121,7 @@ export function KanbanBoard({
                     onClick={() => onLeadClick(lead)}
                     currency={currency}
                     language={language}
+                    jobTypeName={jobTypes.find(jt => jt.id === lead.job_type_id)?.name}
                   />
                 ))}
               </SortableContext>
@@ -134,6 +137,7 @@ export function KanbanBoard({
             onClick={() => {}}
             currency={currency}
             language={language}
+            jobTypeName={jobTypes.find(jt => jt.id === activeLead.job_type_id)?.name}
             isDragging
           />
         ) : null}
