@@ -122,6 +122,8 @@ export default function OnboardingPage() {
     const newCompany = await createCompanyInDb();
     if (newCompany) {
       setCompany(newCompany);
+      // Send welcome email (non-blocking)
+      fetch('/api/onboarding/welcome', { method: 'POST' }).catch(() => {});
       router.push('/overview');
     }
 
@@ -153,6 +155,9 @@ export default function OnboardingPage() {
     setCompany(newCompany);
     setLoading(false);
     handleNext();
+
+    // Send welcome email (non-blocking)
+    fetch('/api/onboarding/welcome', { method: 'POST' }).catch(() => {});
   };
 
   const handleFinish = () => {

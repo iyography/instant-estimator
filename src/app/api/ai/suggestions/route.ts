@@ -1,9 +1,20 @@
 import { NextResponse } from 'next/server';
+import { createClient } from '@/lib/supabase/server';
 import { generateSuggestions } from '@/lib/ai/suggestions';
 import type { AISuggestionRequest } from '@/types/database';
 
 export async function POST(request: Request) {
   try {
+    const supabase = await createClient();
+    const { data: { user } } = await supabase.auth.getUser();
+
+    if (!user) {
+      return NextResponse.json(
+        { error: 'Authentication required' },
+        { status: 401 }
+      );
+    }
+
     const body: AISuggestionRequest = await request.json();
 
     if (!body.industry || !body.job_type_name || !body.language) {

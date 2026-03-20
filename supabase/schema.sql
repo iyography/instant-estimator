@@ -45,6 +45,7 @@ CREATE TABLE companies (
   default_currency currency NOT NULL DEFAULT 'USD',
   default_language language NOT NULL DEFAULT 'en',
   stripe_customer_id TEXT,
+  stripe_subscription_id TEXT,
   subscription_status subscription_status NOT NULL DEFAULT 'trial',
   settings JSONB NOT NULL DEFAULT '{"estimate_range_low_percentage": 10, "estimate_range_high_percentage": 15}'::jsonb,
   created_at TIMESTAMPTZ NOT NULL DEFAULT NOW(),
@@ -116,6 +117,14 @@ CREATE TABLE forms (
   UNIQUE(company_id, slug)
 );
 
+-- Webhook Events (idempotency tracking)
+CREATE TABLE webhook_events (
+  id UUID PRIMARY KEY DEFAULT uuid_generate_v4(),
+  stripe_event_id TEXT NOT NULL UNIQUE,
+  event_type TEXT NOT NULL,
+  created_at TIMESTAMPTZ NOT NULL DEFAULT NOW()
+);
+
 -- Leads
 CREATE TABLE leads (
   id UUID PRIMARY KEY DEFAULT uuid_generate_v4(),
@@ -159,6 +168,7 @@ CREATE INDEX idx_leads_company_id ON leads(company_id);
 CREATE INDEX idx_leads_status ON leads(status);
 CREATE INDEX idx_leads_created_at ON leads(created_at DESC);
 CREATE INDEX idx_lead_responses_lead_id ON lead_responses(lead_id);
+CREATE INDEX idx_webhook_events_stripe_event_id ON webhook_events(stripe_event_id);
 
 -- ============================================================================
 -- ROW LEVEL SECURITY (RLS)

@@ -2,6 +2,11 @@ import { NextResponse } from 'next/server';
 import { headers } from 'next/headers';
 import Stripe from 'stripe';
 import { createServiceClient } from '@/lib/supabase/server';
+import {
+  sendSubscriptionConfirmedEmail,
+  sendPaymentFailedEmail,
+  sendSubscriptionCanceledEmail,
+} from '@/lib/email/resend';
 
 export async function POST(request: Request) {
   if (!process.env.STRIPE_SECRET_KEY || !process.env.STRIPE_WEBHOOK_SECRET) {
@@ -33,6 +38,23 @@ export async function POST(request: Request) {
 
   const supabase = await createServiceClient();
 
+  // Idempotency: check if we've already processed this event
+  const { data: existing } = await supabase
+    .from('webhook_events')
+    .select('id')
+    .eq('stripe_event_id', event.id)
+    .maybeSingle();
+
+  if (existing) {
+    return NextResponse.json({ received: true, duplicate: true }, { status: 200 });
+  }
+
+  // Record event as processed
+  await supabase.from('webhook_events').insert({
+    stripe_event_id: event.id,
+    event_type: event.type,
+  });
+
   try {
     switch (event.type) {
       case 'checkout.session.completed': {
@@ -42,18 +64,31 @@ export async function POST(request: Request) {
         const subscriptionId = session.subscription as string;
 
         if (companyId) {
-          // Update company with Stripe customer ID and active subscription
-          const { error } = await supabase
+          const { error, data: updatedCompany } = await supabase
             .from('companies')
             .update({
               stripe_customer_id: customerId,
+              stripe_subscription_id: subscriptionId,
               subscription_status: 'active',
             })
-            .eq('id', companyId);
+            .eq('id', companyId)
+            .select('name, email')
+            .single();
 
           if (error) {
             console.error('Error updating company after checkout:', error);
           }
+
+          // Send subscription confirmed email
+          if (updatedCompany?.email) {
+            sendSubscriptionConfirmedEmail({
+              companyName: updatedCompany.name,
+              email: updatedCompany.email,
+              planName: 'Pro',
+            }).catch(err => console.error('Failed to send subscription email:', err));
+          }
+        } else {
+          console.error('Webhook checkout.session.completed missing company_id in metadata');
         }
         break;
       }
@@ -95,13 +130,22 @@ export async function POST(request: Request) {
         const subscription = event.data.object as Stripe.Subscription;
         const customerId = subscription.customer as string;
 
-        const { error } = await supabase
+        const { error, data: canceledCompany } = await supabase
           .from('companies')
           .update({ subscription_status: 'canceled' })
-          .eq('stripe_customer_id', customerId);
+          .eq('stripe_customer_id', customerId)
+          .select('name, email')
+          .single();
 
         if (error) {
           console.error('Error updating canceled subscription:', error);
+        }
+
+        if (canceledCompany?.email) {
+          sendSubscriptionCanceledEmail({
+            companyName: canceledCompany.name,
+            email: canceledCompany.email,
+          }).catch(err => console.error('Failed to send cancellation email:', err));
         }
         break;
       }
@@ -110,13 +154,22 @@ export async function POST(request: Request) {
         const invoice = event.data.object as Stripe.Invoice;
         const customerId = invoice.customer as string;
 
-        const { error } = await supabase
+        const { error, data: failedCompany } = await supabase
           .from('companies')
           .update({ subscription_status: 'past_due' })
-          .eq('stripe_customer_id', customerId);
+          .eq('stripe_customer_id', customerId)
+          .select('name, email')
+          .single();
 
         if (error) {
           console.error('Error updating payment failed status:', error);
+        }
+
+        if (failedCompany?.email) {
+          sendPaymentFailedEmail({
+            companyName: failedCompany.name,
+            email: failedCompany.email,
+          }).catch(err => console.error('Failed to send payment failed email:', err));
         }
         break;
       }

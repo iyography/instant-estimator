@@ -48,6 +48,7 @@ export interface Company {
   default_currency: Currency;
   default_language: Language;
   stripe_customer_id: string | null;
+  stripe_subscription_id: string | null;
   subscription_status: SubscriptionStatus;
   settings: CompanySettings;
   slug: string;

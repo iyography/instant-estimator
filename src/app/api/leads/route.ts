@@ -1,6 +1,10 @@
 import { NextResponse } from 'next/server';
 import { createClient } from '@/lib/supabase/server';
 import { createLeadRequestSchema, validateRequestBody } from '@/lib/validations';
+import { calculateEstimate } from '@/lib/pricing-engine';
+import { sendNewLeadNotification } from '@/lib/email/resend';
+import { calculateLeadValue } from '@/lib/lead-scoring';
+import type { AnswerOption, JobType, CompanySettings, Currency } from '@/types/database';
 
 export async function POST(request: Request) {
   const validation = await validateRequestBody(request, createLeadRequestSchema);
@@ -15,6 +19,33 @@ export async function POST(request: Request) {
   const data = validation.data;
   const supabase = await createClient();
 
+  // Fetch job type, company settings, and selected answer options for pricing
+  let estimatedPriceLow = 0;
+  let estimatedPriceHigh = 0;
+
+  const answerOptionIds = data.responses
+    .map(r => r.answer_option_id)
+    .filter((id): id is string => !!id);
+
+  if (answerOptionIds.length > 0) {
+    const [jobTypeResult, companyResult, answersResult] = await Promise.all([
+      supabase.from('job_types').select('*').eq('id', data.job_type_id).single(),
+      supabase.from('companies').select('settings, currency').eq('id', data.company_id).single(),
+      supabase.from('answer_options').select('*').in('id', answerOptionIds),
+    ]);
+
+    if (jobTypeResult.data && companyResult.data && answersResult.data) {
+      const estimate = calculateEstimate(
+        jobTypeResult.data as JobType,
+        answersResult.data as AnswerOption[],
+        (companyResult.data.settings || {}) as CompanySettings,
+        companyResult.data.currency || 'USD'
+      );
+      estimatedPriceLow = estimate.price_low;
+      estimatedPriceHigh = estimate.price_high;
+    }
+  }
+
   // Insert the lead
   const { data: lead, error: leadError } = await supabase
     .from('leads')
@@ -26,8 +57,8 @@ export async function POST(request: Request) {
       customer_email: data.customer_email,
       customer_phone: data.customer_phone || null,
       customer_address: data.customer_address || null,
-      estimated_price_low: 0,
-      estimated_price_high: 0,
+      estimated_price_low: estimatedPriceLow,
+      estimated_price_high: estimatedPriceHigh,
       source_url: data.source_url || null,
     })
     .select()
@@ -49,8 +80,62 @@ export async function POST(request: Request) {
       raw_answer: r.raw_answer || null,
     }));
 
-    await supabase.from('lead_responses').insert(responses);
+    const { error: responsesError } = await supabase.from('lead_responses').insert(responses);
+    if (responsesError) {
+      console.error('Failed to insert lead responses:', responsesError.message);
+    }
   }
+
+  // Send email notification (non-blocking)
+  (async () => {
+    try {
+      // Fetch company details for the notification
+      const { data: companyData } = await supabase
+        .from('companies')
+        .select('name, email, notification_email, currency')
+        .eq('id', data.company_id)
+        .single();
+
+      const { data: jobTypeData } = await supabase
+        .from('job_types')
+        .select('name')
+        .eq('id', data.job_type_id)
+        .single();
+
+      if (companyData && (companyData.email || companyData.notification_email)) {
+        const currency = companyData.currency as Currency || 'USD';
+        const currencySymbol = { USD: '$', EUR: '\u20AC', SEK: '' }[currency] || '$';
+        const currencySuffix = currency === 'SEK' ? ' kr' : '';
+
+        const formatPrice = (cents: number) => {
+          const amount = Math.round(cents / 100);
+          return `${currencySymbol}${amount.toLocaleString()}${currencySuffix}`;
+        };
+
+        const leadValue = calculateLeadValue(
+          { estimated_price_low: estimatedPriceLow, estimated_price_high: estimatedPriceHigh } as Parameters<typeof calculateLeadValue>[0],
+          currency
+        );
+
+        await sendNewLeadNotification({
+          companyName: companyData.name,
+          companyEmail: companyData.email || '',
+          notificationEmail: companyData.notification_email || undefined,
+          customerName: data.customer_name,
+          customerEmail: data.customer_email,
+          customerPhone: data.customer_phone || undefined,
+          customerAddress: data.customer_address || undefined,
+          jobTypeName: jobTypeData?.name || 'Unknown Service',
+          estimateLow: formatPrice(estimatedPriceLow),
+          estimateHigh: formatPrice(estimatedPriceHigh),
+          leadValue,
+          dashboardUrl: process.env.NEXT_PUBLIC_APP_URL || 'https://scopeform.io',
+        });
+      }
+    } catch (emailError) {
+      console.error('Failed to send lead notification email:', emailError);
+    }
+  })();
 
   return NextResponse.json({ success: true, lead });
 }
