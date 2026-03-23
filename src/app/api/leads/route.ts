@@ -4,9 +4,19 @@ import { createLeadRequestSchema, validateRequestBody } from '@/lib/validations'
 import { calculateEstimate } from '@/lib/pricing-engine';
 import { sendNewLeadNotification } from '@/lib/email/resend';
 import { calculateLeadValue } from '@/lib/lead-scoring';
+import { checkRateLimit, getClientIp } from '@/lib/rate-limit';
 import type { AnswerOption, JobType, CompanySettings, Currency } from '@/types/database';
 
 export async function POST(request: Request) {
+  const ip = getClientIp(request);
+  const rl = checkRateLimit(`leads-post:${ip}`, 20, 60_000);
+  if (!rl.success) {
+    return NextResponse.json(
+      { success: false, error: 'Too many requests. Please try again later.' },
+      { status: 429 }
+    );
+  }
+
   const validation = await validateRequestBody(request, createLeadRequestSchema);
 
   if (!validation.success) {
