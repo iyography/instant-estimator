@@ -37,7 +37,7 @@ export async function middleware(request: NextRequest) {
   const { pathname } = request.nextUrl;
 
   // Protected dashboard routes
-  const protectedPaths = ['/overview', '/forms', '/leads', '/services', '/settings', '/onboarding'];
+  const protectedPaths = ['/overview', '/forms', '/leads', '/settings', '/onboarding'];
   const isProtectedPath = protectedPaths.some(path => pathname.startsWith(path));
 
   // Auth routes (login/signup)

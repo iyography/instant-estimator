@@ -87,30 +87,54 @@ export default function OnboardingPage() {
       return null;
     }
 
-    const slug = generateSlug(state.companyName);
-
-    const { data, error: dbError } = await supabase
+    // Check if user already has a company
+    const { data: existing } = await supabase
       .from('companies')
-      .insert({
-        user_id: user.id,
-        name: state.companyName,
-        slug,
-        email: state.email || null,
-        phone: state.phone || null,
-        website_url: state.website || null,
-        industry: state.industry,
-        default_currency: state.currency,
-        default_language: state.language,
-      })
-      .select()
+      .select('*')
+      .eq('user_id', user.id)
       .single();
 
-    if (dbError) {
-      setError(dbError.message);
-      return null;
+    if (existing) {
+      return existing as Company;
     }
 
-    return data as Company;
+    let slug = generateSlug(state.companyName);
+
+    // Try inserting, handle slug collision by appending random suffix
+    let attempts = 0;
+    while (attempts < 5) {
+      const { data, error: dbError } = await supabase
+        .from('companies')
+        .insert({
+          user_id: user.id,
+          name: state.companyName,
+          slug,
+          email: state.email || null,
+          phone: state.phone || null,
+          website_url: state.website || null,
+          industry: state.industry,
+          default_currency: state.currency,
+          default_language: state.language,
+        })
+        .select()
+        .single();
+
+      if (!dbError) {
+        return data as Company;
+      }
+
+      if (dbError.message.includes('companies_slug_key')) {
+        // Slug collision — append random suffix and retry
+        slug = generateSlug(state.companyName) + '-' + Math.random().toString(36).slice(2, 6);
+        attempts++;
+      } else {
+        setError(dbError.message);
+        return null;
+      }
+    }
+
+    setError('Could not create company. Please try a different name.');
+    return null;
   };
 
   const [error, setError] = useState<string | null>(null);

@@ -6,7 +6,7 @@ export default function robots(): MetadataRoute.Robots {
       {
         userAgent: '*',
         allow: '/',
-        disallow: ['/api/', '/overview', '/forms', '/leads', '/services', '/settings', '/onboarding'],
+        disallow: ['/api/', '/overview', '/forms', '/leads', '/settings', '/onboarding'],
       },
     ],
     sitemap: 'https://scopeform.io/sitemap.xml',

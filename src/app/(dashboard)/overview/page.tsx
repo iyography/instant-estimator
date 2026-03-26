@@ -14,8 +14,6 @@ import { createClient } from '@/lib/supabase/client';
 import {
   Users,
   FileText,
-  TrendingUp,
-  TrendingDown,
   DollarSign,
   Plus,
   ArrowRight,
@@ -23,10 +21,8 @@ import {
   Check,
   Target,
   Zap,
-  Calendar,
   BarChart3,
   PieChart,
-  Activity,
   ArrowUpRight,
   ArrowDownRight,
 } from 'lucide-react';
@@ -323,19 +319,21 @@ export default function OverviewPage() {
       .slice(0, 5);
   }, [allLeads, jobTypes]);
 
-  // Monthly data for bar chart
+  // Monthly data for bar chart - computed from real leads
   const monthlyData = useMemo(() => {
-    const months = ['Jan', 'Feb', 'Mar', 'Apr', 'May', 'Jun'];
-    const baseValues = [12, 18, 15, 22, 25, 21];
-    return months.map((label, i) => ({
-      label,
-      value: baseValues[i],
-    }));
-  }, []);
-
-  // Sparkline data
-  const revenueSparkline = [150, 180, 165, 200, 220, 195, 240];
-  const leadsSparkline = [8, 12, 10, 15, 14, 18, 21];
+    const now = new Date();
+    const months: Array<{ label: string; value: number }> = [];
+    for (let i = 5; i >= 0; i--) {
+      const d = new Date(now.getFullYear(), now.getMonth() - i, 1);
+      const label = d.toLocaleString('default', { month: 'short' });
+      const count = allLeads.filter(l => {
+        const created = new Date(l.created_at);
+        return created.getMonth() === d.getMonth() && created.getFullYear() === d.getFullYear();
+      }).length;
+      months.push({ label, value: count });
+    }
+    return months;
+  }, [allLeads]);
 
   const copyEmbedCode = () => {
     if (company) {
@@ -366,12 +364,6 @@ export default function OverviewPage() {
           <p className="text-slate-600">{t.overview.subtitle}</p>
         </div>
         <div className="flex gap-2">
-          <Link href="/demo">
-            <Button variant="outline">
-              <Activity className="mr-2 h-4 w-4" />
-              View Demo
-            </Button>
-          </Link>
           <Link href="/forms/new">
             <Button>
               <Plus className="mr-2 h-4 w-4" />
@@ -386,36 +378,26 @@ export default function OverviewPage() {
         <KPICard
           title={t.overview.totalLeads}
           value={stats.totalLeads}
-          change={12}
-          changeLabel="vs last month"
           icon={Users}
-          trend="up"
-          sparklineData={leadsSparkline}
+          trend="neutral"
         />
         <KPICard
           title={t.overview.newLeads}
           value={stats.newLeads}
-          change={-5}
-          changeLabel="vs last month"
           icon={FileText}
-          trend="down"
+          trend="neutral"
         />
         <KPICard
           title={t.overview.conversionRate}
           value={`${conversionRate}%`}
-          change={8}
-          changeLabel="vs last month"
           icon={Target}
-          trend="up"
+          trend="neutral"
         />
         <KPICard
           title={t.overview.estimatedRevenue}
           value={formatCurrency(stats.estimatedRevenue, company?.default_currency || 'USD', language)}
-          change={24}
-          changeLabel="vs last month"
           icon={DollarSign}
-          trend="up"
-          sparklineData={revenueSparkline}
+          trend="neutral"
         />
       </div>
 
@@ -432,10 +414,11 @@ export default function OverviewPage() {
                 </CardTitle>
                 <CardDescription>Lead volume over the past 6 months</CardDescription>
               </div>
-              <Badge variant="outline" className="text-green-600 border-green-200 bg-green-50">
-                <TrendingUp className="h-3 w-3 mr-1" />
-                +15%
-              </Badge>
+              {stats.totalLeads > 0 && (
+                <Badge variant="outline" className="text-slate-600 border-slate-200 bg-slate-50">
+                  {stats.totalLeads} total
+                </Badge>
+              )}
             </div>
           </CardHeader>
           <CardContent>

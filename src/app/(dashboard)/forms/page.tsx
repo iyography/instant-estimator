@@ -107,45 +107,25 @@ export default function FormsPage() {
 
   const handleCreateEstimator = () => {
     const template = SERVICE_TEMPLATES.find(t => t.id === selectedTemplateId);
-
-    // Generate slug from name or template name
     const name = newFormName.trim() || template?.name || 'New Estimator';
-    const slug = newFormSlug.trim() || name.toLowerCase().replace(/\s+/g, '-').replace(/[^a-z0-9-]/g, '');
 
-    const newEstimator: EstimatorForm = {
-      id: `est-${Date.now()}`,
-      company_id: company?.id || '',
-      name: name,
-      slug: slug,
-      is_active: true,
-      styling: {
-        primary_color: '#0f172a',
-        background_color: '#ffffff',
-        font_family: 'Inter',
-      },
-      job_type_ids: [],
-      created_at: new Date().toISOString(),
-      updated_at: new Date().toISOString(),
-    };
-
-    setEstimators([...estimators, newEstimator]);
     setShowCreateModal(false);
-
-    // Reset form
     setNewFormName('');
     setNewFormSlug('');
     setSelectedTemplateId(null);
     setSelectedIndustry('all');
 
-    // Navigate to edit page with template param if selected
+    // Navigate to the form builder — save happens there when user clicks "Save Changes"
     const editUrl = selectedTemplateId
-      ? `/forms/${newEstimator.id}?template=${selectedTemplateId}`
-      : `/forms/${newEstimator.id}`;
+      ? `/forms/new?template=${selectedTemplateId}&name=${encodeURIComponent(name)}`
+      : `/forms/new?name=${encodeURIComponent(name)}`;
     router.push(editUrl);
   };
 
   const handleDeleteEstimator = async (id: string) => {
     if (!confirm('Are you sure you want to delete this estimator?')) return;
+    const supabase = createClient();
+    await supabase.from('forms').delete().eq('id', id);
     setEstimators(estimators.filter((e) => e.id !== id));
     setActiveMenu(null);
   };

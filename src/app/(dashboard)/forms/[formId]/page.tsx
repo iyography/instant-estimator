@@ -146,6 +146,12 @@ export default function FormBuilderPage() {
     // Check if this is a new estimator created from a template
     const urlParams = new URLSearchParams(window.location.search);
     const templateId = urlParams.get('template');
+    const nameParam = urlParams.get('name');
+
+    if (nameParam && !estimatorName) {
+      setEstimatorName(nameParam);
+      setJobType(prev => ({ ...prev, name: nameParam }));
+    }
 
     if (templateId) {
       // Load from template
@@ -249,10 +255,60 @@ export default function FormBuilderPage() {
   }, [formId, isNew, company]);
 
   const handleSave = async () => {
+    if (!company) return;
+
     setSaving(true);
-    await new Promise(resolve => setTimeout(resolve, 500));
-    setSaving(false);
-    router.push('/forms');
+    try {
+      const response = await fetch('/api/forms', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          companyId: company.id,
+          jobType: {
+            id: isNew ? undefined : formId,
+            name: jobType.name || estimatorName || 'Untitled Estimator',
+            name_sv: (jobType as any).name_sv || null,
+            description: jobType.description || null,
+            description_sv: (jobType as any).description_sv || null,
+            base_price: jobType.base_price || 0,
+            min_price: jobType.min_price || null,
+            max_price: jobType.max_price || null,
+            estimated_hours: jobType.estimated_hours || null,
+            is_active: jobType.is_active ?? true,
+            display_order: jobType.display_order ?? 0,
+          },
+          questions: questions.map((q, idx) => ({
+            question_text: q.question_text,
+            question_text_sv: q.question_text_sv || null,
+            question_type: q.question_type,
+            is_required: q.is_required,
+            display_order: idx,
+            ai_generated: q.ai_generated || false,
+            answer_options: q.answer_options.map((ao, aoIdx) => ({
+              answer_text: ao.answer_text,
+              answer_text_sv: ao.answer_text_sv || null,
+              price_modifier_type: ao.price_modifier_type,
+              price_modifier_value: ao.price_modifier_value,
+              display_order: aoIdx,
+            })),
+          })),
+        }),
+      });
+
+      const result = await response.json();
+
+      if (!response.ok) {
+        alert(result.error || 'Failed to save. Please try again.');
+        return;
+      }
+
+      router.push('/forms');
+    } catch (error) {
+      console.error('Save error:', error);
+      alert('Failed to save. Please try again.');
+    } finally {
+      setSaving(false);
+    }
   };
 
   const handleAISuggestions = async () => {

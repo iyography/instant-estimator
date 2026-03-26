@@ -499,15 +499,15 @@ export default function HomePage() {
               {t.nav.pricing}
             </Link>
           </nav>
-          <div className="flex items-center gap-3">
+          <div className="flex items-center gap-2 sm:gap-3">
             <LanguageSwitcher />
             <Link href="/login">
-              <Button className="bg-black hover:bg-slate-800 text-white">
+              <Button className="bg-black hover:bg-slate-800 text-white text-xs sm:text-sm px-3 sm:px-4">
                 {t.nav.signIn}
               </Button>
             </Link>
-            <Link href="/signup">
-              <Button className="bg-gradient-to-r from-blue-600 to-purple-600 hover:from-blue-700 hover:to-purple-700 text-white shadow-lg shadow-blue-500/25 hover:shadow-blue-500/40 transition-all duration-300">
+            <Link href="/signup" className="hidden sm:block">
+              <Button className="bg-gradient-to-r from-blue-600 to-purple-600 hover:from-blue-700 hover:to-purple-700 text-white shadow-lg shadow-blue-500/25 hover:shadow-blue-500/40 transition-all duration-300 text-xs sm:text-sm px-3 sm:px-4">
                 {t.nav.getStarted}
               </Button>
             </Link>
@@ -540,7 +540,7 @@ export default function HomePage() {
             {/* Main Heading */}
             <h1
               className={cn(
-                'text-5xl sm:text-6xl lg:text-7xl font-bold tracking-tight transition-all duration-700 delay-100',
+                'text-3xl sm:text-5xl lg:text-7xl font-bold tracking-tight transition-all duration-700 delay-100',
                 mounted ? 'opacity-100 translate-y-0' : 'opacity-0 translate-y-8'
               )}
             >
@@ -762,18 +762,12 @@ export default function HomePage() {
               </span>
             </div>
             <div className="flex flex-wrap justify-center gap-8 text-sm text-slate-400">
-              <Link href="#" className="hover:text-white transition-colors">
-                {t.footer.privacy}
-              </Link>
-              <Link href="#" className="hover:text-white transition-colors">
-                {t.footer.terms}
-              </Link>
-              <Link href="#" className="hover:text-white transition-colors">
+              <a href="mailto:info@scopeform.io" className="hover:text-white transition-colors">
                 {t.footer.contact}
-              </Link>
-              <Link href="#" className="hover:text-white transition-colors">
+              </a>
+              <a href="mailto:info@scopeform.io" className="hover:text-white transition-colors">
                 {t.footer.support}
-              </Link>
+              </a>
             </div>
           </div>
           <div className="mt-12 pt-8 border-t border-slate-800 text-center text-sm text-slate-500">
