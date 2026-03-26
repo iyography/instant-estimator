@@ -4,7 +4,7 @@ const resend = process.env.RESEND_API_KEY
   ? new Resend(process.env.RESEND_API_KEY)
   : null;
 
-const FROM_EMAIL = 'ScopeForm <info@scopeform.io>';
+const FROM_EMAIL = 'ScopeForm <noreply@info.scopeform.io>';
 const APP_URL = process.env.NEXT_PUBLIC_APP_URL || 'https://scopeform.io';
 
 export interface EmailResult {
